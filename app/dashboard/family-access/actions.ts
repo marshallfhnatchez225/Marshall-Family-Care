@@ -36,10 +36,11 @@ export async function createFamilyAccount(formData: FormData) {
     .from("profiles")
     .select("role")
     .eq("id", user.id)
-    .returns<{ role: StaffRole | "family" | null }>()
     .single();
 
-  if (!isStaffRole(profile?.role) || !staffRoles.has(profile.role)) {
+  const profileRole = (profile as { role?: string | null } | null)?.role;
+
+  if (!isStaffRole(profileRole) || !staffRoles.has(profileRole)) {
     redirect("/dashboard/family-access?message=Only staff can create family accounts.");
   }
 
