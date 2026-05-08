@@ -1,4 +1,4 @@
-import { signIn, signUp } from "@/app/(auth)/login/actions";
+import { signIn } from "@/app/(auth)/login/actions";
 
 type AuthFormProps = {
   message?: string;
@@ -26,10 +26,10 @@ export function AuthForm({ message }: AuthFormProps) {
         <button formAction={signIn} className="button primary">
           Sign in
         </button>
-        <button formAction={signUp} className="button secondary">
-          Create account
-        </button>
       </div>
+      <p className="helper-text">
+        Family accounts are created by Marshall Family Care staff.
+      </p>
     </form>
   );
 }
