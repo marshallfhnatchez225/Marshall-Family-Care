@@ -28,7 +28,7 @@ export function AuthForm({ message }: AuthFormProps) {
         </button>
       </div>
       <p className="helper-text">
-        Family accounts are created by Marshall Family Care staff.
+        Family portal accounts are created by Marshall Family Care staff.
       </p>
     </form>
   );

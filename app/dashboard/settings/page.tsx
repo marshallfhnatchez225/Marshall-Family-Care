@@ -18,8 +18,8 @@ export default function SettingsPage() {
             Default role
             <select defaultValue="family">
               <option value="family">Family member</option>
-              <option value="caregiver">Caregiver</option>
-              <option value="clinician">Clinician</option>
+              <option value="staff">Staff</option>
+              <option value="service_director">Service director</option>
               <option value="admin">Admin</option>
             </select>
           </label>

@@ -13,18 +13,18 @@ export type Database = {
         Row: {
           id: string;
           full_name: string | null;
-          role: "admin" | "caregiver" | "family" | "clinician" | null;
+          role: "admin" | "staff" | "service_director" | "family" | null;
           created_at: string;
         };
         Insert: {
           id: string;
           full_name?: string | null;
-          role?: "admin" | "caregiver" | "family" | "clinician" | null;
+          role?: "admin" | "staff" | "service_director" | "family" | null;
           created_at?: string;
         };
         Update: {
           full_name?: string | null;
-          role?: "admin" | "caregiver" | "family" | "clinician" | null;
+          role?: "admin" | "staff" | "service_director" | "family" | null;
         };
       };
     };

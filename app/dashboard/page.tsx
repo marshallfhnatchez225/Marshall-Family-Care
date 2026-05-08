@@ -1,6 +1,6 @@
 const stats = [
-  { label: "Active care plans", value: "12" },
-  { label: "Upcoming visits", value: "8" },
+  { label: "Active arrangements", value: "12" },
+  { label: "Upcoming services", value: "8" },
   { label: "Unread messages", value: "3" },
   { label: "Family updates", value: "15" }
 ];
@@ -20,16 +20,16 @@ export default function DashboardPage() {
         <article className="panel">
           <h2>Today&apos;s Priorities</h2>
           <ul className="task-list">
-            <li>Confirm morning medication check-ins.</li>
-            <li>Review the care note from yesterday&apos;s home visit.</li>
-            <li>Send appointment reminders for Friday transportation.</li>
+            <li>Confirm service details with the coordinating family contact.</li>
+            <li>Review obituary and remembrance updates awaiting approval.</li>
+            <li>Send visitation and transportation reminders for Friday.</li>
           </ul>
         </article>
         <article className="panel accent-panel">
-          <h2>Care Team Snapshot</h2>
+          <h2>Family Support Snapshot</h2>
           <p>
-            Keep family contacts, caregivers, and clinicians aligned around each
-            patient&apos;s care plan.
+            Keep staff, family contacts, and service coordinators aligned around
+            each family&apos;s arrangements.
           </p>
         </article>
       </section>

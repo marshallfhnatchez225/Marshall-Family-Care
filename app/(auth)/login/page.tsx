@@ -12,9 +12,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <section className="auth-panel">
         <div>
           <p className="eyebrow">Marshall Family Care</p>
-          <h1>Care Portal</h1>
+          <h1>Family Portal</h1>
           <p className="lede">
-            Sign in to coordinate visits, messages, care plans, and family updates.
+            Sign in to view service details, messages, remembrance items, and
+            family updates.
           </p>
         </div>
         <AuthForm message={message} />

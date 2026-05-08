@@ -22,7 +22,7 @@ export default async function DashboardLayout({
       <section className="dashboard-main">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Secure workspace</p>
+            <p className="eyebrow">Private family workspace</p>
             <h1>Marshall Family Care Portal</h1>
           </div>
           <div className="user-chip">{user.email}</div>

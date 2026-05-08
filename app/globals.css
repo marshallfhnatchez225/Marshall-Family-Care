@@ -1,15 +1,16 @@
 :root {
-  --background: #f6f8fb;
+  --background: #f8f5ef;
   --surface: #ffffff;
-  --surface-muted: #edf3f6;
-  --text: #14212b;
-  --muted: #637381;
-  --line: #d9e2e8;
-  --primary: #126a5a;
-  --primary-dark: #0d4f44;
-  --accent: #2f6f9f;
-  --warning: #b85c38;
-  --shadow: 0 16px 40px rgba(20, 33, 43, 0.08);
+  --surface-muted: #f3eadb;
+  --text: #241719;
+  --muted: #725f55;
+  --line: #e4d7c3;
+  --primary: #6f1d2a;
+  --primary-dark: #4e121d;
+  --accent: #b8892f;
+  --accent-dark: #7a571b;
+  --warning: #9f4a2f;
+  --shadow: 0 16px 40px rgba(60, 26, 31, 0.1);
 }
 
 * {
@@ -88,6 +89,14 @@ h2 {
   max-width: 34rem;
 }
 
+.helper-text,
+.section-note,
+.empty-state {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .auth-form,
 .settings-form {
   display: grid;
@@ -114,7 +123,7 @@ select {
 
 input:focus,
 select:focus {
-  outline: 3px solid rgba(18, 106, 90, 0.16);
+  outline: 3px solid rgba(184, 137, 47, 0.24);
   border-color: var(--primary);
 }
 
@@ -167,8 +176,8 @@ select:focus {
   flex-direction: column;
   gap: 28px;
   padding: 24px;
-  background: #11202a;
-  color: #eef6f8;
+  background: #4e121d;
+  color: #fff8ec;
 }
 
 .brand-block {
@@ -183,8 +192,8 @@ select:focus {
   height: 42px;
   place-items: center;
   border-radius: 8px;
-  background: var(--primary);
-  color: #ffffff;
+  background: var(--accent);
+  color: #241719;
   font-weight: 800;
 }
 
@@ -193,7 +202,7 @@ select:focus {
 }
 
 .brand-block span:last-child {
-  color: #adc2ca;
+  color: #e8c982;
   font-size: 0.9rem;
 }
 
@@ -211,7 +220,7 @@ select:focus {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: #eef6f8;
+  color: #fff8ec;
   cursor: pointer;
   text-align: left;
 }
@@ -277,7 +286,7 @@ select:focus {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(20, 33, 43, 0.05);
+  box-shadow: 0 8px 24px rgba(60, 26, 31, 0.06);
 }
 
 .metric-card {

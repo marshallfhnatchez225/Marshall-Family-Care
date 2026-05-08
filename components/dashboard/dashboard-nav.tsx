@@ -1,12 +1,21 @@
 import Link from "next/link";
-import { CalendarDays, Home, LogOut, MessageSquare, Settings, Users } from "lucide-react";
+import {
+  CalendarDays,
+  Home,
+  LogOut,
+  MessageSquare,
+  Settings,
+  UserPlus,
+  Users
+} from "lucide-react";
 import { signOut } from "@/app/(auth)/login/actions";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: Home },
-  { href: "/dashboard/patients", label: "Patients", icon: Users },
-  { href: "/dashboard/appointments", label: "Appointments", icon: CalendarDays },
+  { href: "/dashboard/families", label: "Families", icon: Users },
+  { href: "/dashboard/services", label: "Services", icon: CalendarDays },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+  { href: "/dashboard/family-access", label: "Family Access", icon: UserPlus },
   { href: "/dashboard/settings", label: "Settings", icon: Settings }
 ];
 

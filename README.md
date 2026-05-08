@@ -7,9 +7,10 @@ A starter care coordination portal for Marshall Family Care, built with Next.js 
 - Next.js App Router project structure
 - Supabase browser and server client setup
 - Supabase auth callback route
-- Login, sign up, and sign out actions
+- Login and sign out actions
+- Staff-only family account creation
 - Protected dashboard layout
-- Dashboard pages for overview, patients, appointments, messages, and settings
+- Dashboard pages for overview, families, services, messages, family access, and settings
 - Responsive CSS foundation
 - Vercel project configuration
 - Environment variable example file
@@ -35,6 +36,7 @@ cp .env.example .env.local
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
 ```
 
 5. Start the app:
@@ -58,7 +60,9 @@ http://localhost:3000/auth/callback
 https://your-vercel-domain.vercel.app/auth/callback
 ```
 
-6. Enable email authentication or any provider you want to support.
+6. Enable email authentication.
+7. Disable public sign-ups in Supabase Auth settings. Family accounts should be created by staff from inside the portal.
+8. Copy the service role key from Project Settings, then API. Add it to `SUPABASE_SERVICE_ROLE_KEY` only in `.env.local` and Vercel environment variables. Never expose or commit this key.
 
 ## Optional Profiles Table
 
@@ -68,7 +72,7 @@ The starter includes a TypeScript placeholder for a `profiles` table. You can cr
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text,
-  role text check (role in ('admin', 'caregiver', 'family', 'clinician')),
+  role text check (role in ('admin', 'staff', 'service_director', 'family')),
   created_at timestamptz default now() not null
 );
 
@@ -78,6 +82,22 @@ create policy "Users can read their own profile"
 on public.profiles for select
 using (auth.uid() = id);
 ```
+
+## Creating the First Staff Account
+
+Because family sign-up is intentionally closed, create the first staff user from the Supabase dashboard:
+
+1. Go to Authentication, then Users.
+2. Add a staff user with an email and temporary password.
+3. Copy the new user ID.
+4. Add a matching row in the `profiles` table:
+
+```sql
+insert into public.profiles (id, full_name, role)
+values ('USER_ID_FROM_AUTH', 'Staff Name', 'admin');
+```
+
+That staff user can then sign in and use Dashboard, then Family Access to create family credentials.
 
 ## Vercel Deployment
 
@@ -89,6 +109,7 @@ using (auth.uid() = id);
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 NEXT_PUBLIC_SITE_URL
+SUPABASE_SERVICE_ROLE_KEY
 ```
 
 4. Set `NEXT_PUBLIC_SITE_URL` to your Vercel production URL.
@@ -101,6 +122,6 @@ If you do not want to use git locally, create a new GitHub repository and upload
 ## Suggested Next Steps
 
 - Connect dashboard pages to real Supabase tables.
-- Add role-based access rules for staff, caregivers, and family members.
-- Add patient intake forms and appointment creation actions.
+- Add arrangement-to-family assignment tables so family members only see their approved loved one's details.
+- Add arrangement forms and service scheduling actions.
 - Add row level security policies before storing sensitive care information.
