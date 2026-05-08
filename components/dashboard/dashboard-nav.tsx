@@ -10,7 +10,11 @@ import {
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/login/actions";
 
-const navItems = [
+type DashboardNavProps = {
+  role?: string | null;
+};
+
+const staffNavItems = [
   { href: "/dashboard", label: "Overview", icon: Home },
   { href: "/dashboard/families", label: "Families", icon: Users },
   { href: "/dashboard/services", label: "Services", icon: CalendarDays },
@@ -19,7 +23,14 @@ const navItems = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings }
 ];
 
-export function DashboardNav() {
+const familyNavItems = [
+  { href: "/dashboard", label: "Task Manager", icon: Home },
+  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare }
+];
+
+export function DashboardNav({ role }: DashboardNavProps) {
+  const navItems = role === "family" ? familyNavItems : staffNavItems;
+
   return (
     <aside className="sidebar">
       <div className="brand-block">

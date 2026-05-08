@@ -16,9 +16,16 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const profileRole = (profile as { role?: string | null } | null)?.role;
+
   return (
     <main className="dashboard-shell">
-      <DashboardNav />
+      <DashboardNav role={profileRole} />
       <section className="dashboard-main">
         <header className="topbar">
           <div>
