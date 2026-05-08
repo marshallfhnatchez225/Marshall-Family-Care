@@ -4,7 +4,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-const staffRoles = new Set(["admin", "staff", "service_director"]);
+type StaffRole = "admin" | "staff" | "service_director";
+
+const staffRoles = new Set<StaffRole>(["admin", "staff", "service_director"]);
+
+function isStaffRole(role: string | null | undefined): role is StaffRole {
+  return role === "admin" || role === "staff" || role === "service_director";
+}
 
 export async function createFamilyAccount(formData: FormData) {
   const fullName = String(formData.get("fullName") ?? "").trim();
@@ -30,9 +36,10 @@ export async function createFamilyAccount(formData: FormData) {
     .from("profiles")
     .select("role")
     .eq("id", user.id)
+    .returns<{ role: StaffRole | "family" | null }>()
     .single();
 
-  if (!profile?.role || !staffRoles.has(profile.role)) {
+  if (!isStaffRole(profile?.role) || !staffRoles.has(profile.role)) {
     redirect("/dashboard/family-access?message=Only staff can create family accounts.");
   }
 

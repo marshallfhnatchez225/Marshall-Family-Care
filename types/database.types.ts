@@ -26,6 +26,7 @@ export type Database = {
           full_name?: string | null;
           role?: "admin" | "staff" | "service_director" | "family" | null;
         };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

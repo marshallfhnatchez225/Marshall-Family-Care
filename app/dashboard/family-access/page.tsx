@@ -2,7 +2,13 @@ import { createFamilyAccount } from "./actions";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-const staffRoles = new Set(["admin", "staff", "service_director"]);
+type StaffRole = "admin" | "staff" | "service_director";
+
+const staffRoles = new Set<StaffRole>(["admin", "staff", "service_director"]);
+
+function isStaffRole(role: string | null | undefined): role is StaffRole {
+  return role === "admin" || role === "staff" || role === "service_director";
+}
 
 type FamilyAccessPageProps = {
   searchParams: Promise<{ message?: string }>;
@@ -25,10 +31,11 @@ export default async function FamilyAccessPage({
     .from("profiles")
     .select("role")
     .eq("id", user.id)
+    .returns<{ role: StaffRole | "family" | null }>()
     .single();
 
   const canManageFamilyAccess = Boolean(
-    profile?.role && staffRoles.has(profile.role)
+    isStaffRole(profile?.role) && staffRoles.has(profile.role)
   );
 
   return (
