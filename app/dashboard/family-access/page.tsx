@@ -31,11 +31,12 @@ export default async function FamilyAccessPage({
     .from("profiles")
     .select("role")
     .eq("id", user.id)
-    .returns<{ role: StaffRole | "family" | null }>()
     .single();
 
+  const profileRole = (profile as { role?: string | null } | null)?.role;
+
   const canManageFamilyAccess = Boolean(
-    isStaffRole(profile?.role) && staffRoles.has(profile.role)
+    isStaffRole(profileRole) && staffRoles.has(profileRole)
   );
 
   return (
