@@ -1,4 +1,4 @@
-"use server";
+   "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -44,7 +44,16 @@ export async function createFamilyAccount(formData: FormData) {
     redirect("/dashboard/family-access?message=Only staff can create family accounts.");
   }
 
-  const admin = createAdminClient();
+  let admin: ReturnType<typeof createAdminClient>;
+
+  try {
+    admin = createAdminClient();
+  } catch {
+    redirect(
+      "/dashboard/family-access?message=Missing Supabase service role key in Vercel environment variables."
+    );
+  }
+
   const { data, error } = await admin.auth.admin.createUser({
     email,
     password,
@@ -81,3 +90,4 @@ export async function createFamilyAccount(formData: FormData) {
     )}`
   );
 }
+  
