@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendFamilyInviteEmail } from "@/lib/email";
 import { isStaffRole, type StaffRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -91,9 +92,24 @@ export async function createFamilyAccount(formData: FormData) {
     );
   }
 
+  const emailResult = await sendFamilyInviteEmail({
+    email,
+    fullName,
+    lovedOneName,
+    password
+  });
+
+  if (!emailResult.sent) {
+    redirect(
+      `/dashboard/family-access?message=${encodeURIComponent(
+        emailResult.error ?? `Family account created for ${fullName}, but email was not sent.`
+      )}`
+    );
+  }
+
   redirect(
     `/dashboard/family-access?message=${encodeURIComponent(
-      `Family account created for ${fullName}. Share the temporary password securely.`
+      `Family account created for ${fullName}. Login details were emailed to ${email}.`
     )}`
   );
 }
