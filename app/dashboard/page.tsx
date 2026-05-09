@@ -1,37 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { FamilyPortal } from "@/components/family/family-portal";
 
 const staffStats = [
   { label: "Active arrangements", value: "12" },
   { label: "Upcoming services", value: "8" },
   { label: "Unread messages", value: "3" },
   { label: "Family updates", value: "15" }
-];
-
-const familyTasks = [
-  {
-    title: "Pre-Arrangement",
-    tasks: [
-      { label: "Confirm family contact information", status: "In progress" },
-      { label: "Review service preferences", status: "Pending" },
-      { label: "Upload or provide obituary details", status: "Pending" }
-    ]
-  },
-  {
-    title: "Post-Arrangement",
-    tasks: [
-      { label: "Approve service date, time, and location", status: "Pending" },
-      { label: "Review remembrance items", status: "Pending" },
-      { label: "Confirm floral and program details", status: "Pending" }
-    ]
-  },
-  {
-    title: "Aftercare",
-    tasks: [
-      { label: "Receive aftercare resources", status: "Available soon" },
-      { label: "Schedule follow-up support call", status: "Optional" },
-      { label: "View keepsake and document checklist", status: "Pending" }
-    ]
-  }
 ];
 
 export default async function DashboardPage() {
@@ -45,32 +19,7 @@ export default async function DashboardPage() {
   const profileRole = (profile as { role?: string | null } | null)?.role;
 
   if (profileRole === "family") {
-    return (
-      <div className="page-stack">
-        <section className="panel accent-panel">
-          <h2>Family Task Manager</h2>
-          <p>
-            Track the items Marshall Family Care needs from your family before,
-            during, and after arrangements.
-          </p>
-        </section>
-        <section className="task-board">
-          {familyTasks.map((group) => (
-            <article className="task-column" key={group.title}>
-              <h2>{group.title}</h2>
-              <div className="task-card-list">
-                {group.tasks.map((task) => (
-                  <div className="task-card" key={task.label}>
-                    <strong>{task.label}</strong>
-                    <span>{task.status}</span>
-                  </div>
-                ))}
-              </div>
-            </article>
-          ))}
-        </section>
-      </div>
-    );
+    return <FamilyPortal />;
   }
 
   return (

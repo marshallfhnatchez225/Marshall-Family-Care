@@ -1,11 +1,12 @@
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 
 export default async function DashboardLayout({
   children
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const supabase = await createClient();
   const {
@@ -22,6 +23,10 @@ export default async function DashboardLayout({
     .eq("id", user.id)
     .single();
   const profileRole = (profile as { role?: string | null } | null)?.role;
+
+  if (profileRole === "family") {
+    return <>{children}</>;
+  }
 
   return (
     <main className="dashboard-shell">

@@ -1,11 +1,12 @@
 import { isStaffRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 
 export default async function StaffOnlyLayout({
   children
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const supabase = await createClient();
   const {
