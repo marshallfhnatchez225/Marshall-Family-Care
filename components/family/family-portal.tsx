@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
+import { signOut } from "@/app/(auth)/login/actions";
 
 type FormStatus =
   | "Needs review"
@@ -448,6 +449,11 @@ export function FamilyPortal(props: FamilyPortalProps) {
             </button>
           ))}
         </nav>
+        <form action={signOut}>
+          <button className="family-sign-out-button" type="submit">
+            Log out
+          </button>
+        </form>
         <div className="family-footer-note">
           Need immediate help? Call Marshall Funeral Home at (601) 555-0139.
         </div>

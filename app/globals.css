@@ -166,6 +166,12 @@ select:focus {
   color: var(--text);
 }
 
+.button.danger {
+  background: #fff6f3;
+  border-color: #d9b5ac;
+  color: #86402f;
+}
+
 .dashboard-shell {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
@@ -444,6 +450,28 @@ select:focus {
   max-width: 560px;
 }
 
+.family-account-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.family-account-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffaf2;
+}
+
+.family-account-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
 .family-portal {
   --family-ink: #1f2528;
   --family-muted: #657174;
@@ -611,6 +639,24 @@ select:focus {
   color: #f5dfaa;
   font-size: 13px;
   line-height: 1.5;
+}
+
+.family-sign-out-button {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 16px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 231, 155, 0.72);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff8ec;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.family-sign-out-button:hover {
+  background: linear-gradient(135deg, rgba(255, 231, 155, 0.98), rgba(216, 173, 47, 0.98), rgba(157, 111, 9, 0.96));
+  color: var(--family-cedar-dark);
 }
 
 .family-content {
@@ -928,6 +974,10 @@ select:focus {
   .family-three-column {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .family-account-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 620px) {
@@ -980,5 +1030,9 @@ select:focus {
   .family-form-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .family-account-form {
+    grid-template-columns: 1fr;
   }
 }

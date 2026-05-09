@@ -28,12 +28,14 @@ export default async function DashboardPage() {
     assigned_director?: string | null;
   } | null;
   const profileRole = familyProfile?.role;
+  const authRole = user?.user_metadata?.role;
+  const effectiveRole = profileRole ?? authRole;
 
-  if (profileRole === "family") {
+  if (effectiveRole === "family") {
     return (
       <FamilyPortal
         assignedDirector={familyProfile?.assigned_director}
-        familyContact={familyProfile?.full_name}
+        familyContact={familyProfile?.full_name ?? user?.user_metadata?.full_name}
         lovedOneName={familyProfile?.loved_one_name}
         preferredPhone={familyProfile?.preferred_phone}
         userId={user?.id}

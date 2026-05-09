@@ -93,3 +93,150 @@ export async function createFamilyAccount(formData: FormData) {
     )}`
   );
 }
+
+export async function updateFamilyAccount(formData: FormData) {
+  const userId = String(formData.get("userId") ?? "");
+  const fullName = String(formData.get("fullName") ?? "").trim();
+  const lovedOneName = String(formData.get("lovedOneName") ?? "").trim();
+  const preferredPhone = String(formData.get("preferredPhone") ?? "").trim();
+  const assignedDirector = String(formData.get("assignedDirector") ?? "").trim();
+
+  if (!userId || !fullName || !lovedOneName) {
+    redirect("/dashboard/family-access?message=Family name and loved one name are required.");
+  }
+
+  const admin = await requireStaffAdminClient();
+
+  const { error: authError } = await admin.auth.admin.updateUserById(userId, {
+    user_metadata: {
+      full_name: fullName,
+      loved_one_name: lovedOneName,
+      preferred_phone: preferredPhone,
+      assigned_director: assignedDirector,
+      role: "family"
+    }
+  });
+
+  if (authError) {
+    redirect(`/dashboard/family-access?message=${encodeURIComponent(authError.message)}`);
+  }
+
+  const { error } = await admin.from("profiles").upsert({
+    id: userId,
+    full_name: fullName,
+    loved_one_name: lovedOneName,
+    preferred_phone: preferredPhone || null,
+    assigned_director: assignedDirector || null,
+    role: "family"
+  });
+
+  if (error) {
+    redirect(`/dashboard/family-access?message=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect(`/dashboard/family-access?message=${encodeURIComponent(`Family account updated for ${fullName}.`)}`);
+}
+
+export async function repairFamilyAccountByEmail(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const fullName = String(formData.get("fullName") ?? "").trim();
+  const lovedOneName = String(formData.get("lovedOneName") ?? "").trim();
+  const preferredPhone = String(formData.get("preferredPhone") ?? "").trim();
+  const assignedDirector = String(formData.get("assignedDirector") ?? "").trim();
+
+  if (!email || !fullName || !lovedOneName) {
+    redirect("/dashboard/family-access?message=Enter email, family name, and loved one name to repair access.");
+  }
+
+  const admin = await requireStaffAdminClient();
+  const { data, error } = await admin.auth.admin.listUsers();
+
+  if (error) {
+    redirect(`/dashboard/family-access?message=${encodeURIComponent(error.message)}`);
+  }
+
+  const authUser = data.users.find((candidate) => candidate.email?.toLowerCase() === email);
+
+  if (!authUser) {
+    redirect(`/dashboard/family-access?message=${encodeURIComponent(`No login found for ${email}. Create a new family account instead.`)}`);
+  }
+
+  const { error: authError } = await admin.auth.admin.updateUserById(authUser.id, {
+    user_metadata: {
+      full_name: fullName,
+      loved_one_name: lovedOneName,
+      preferred_phone: preferredPhone,
+      assigned_director: assignedDirector,
+      role: "family"
+    }
+  });
+
+  if (authError) {
+    redirect(`/dashboard/family-access?message=${encodeURIComponent(authError.message)}`);
+  }
+
+  const { error: profileError } = await admin.from("profiles").upsert({
+    id: authUser.id,
+    full_name: fullName,
+    loved_one_name: lovedOneName,
+    preferred_phone: preferredPhone || null,
+    assigned_director: assignedDirector || null,
+    role: "family"
+  });
+
+  if (profileError) {
+    redirect(`/dashboard/family-access?message=${encodeURIComponent(profileError.message)}`);
+  }
+
+  redirect(`/dashboard/family-access?message=${encodeURIComponent(`Repaired family portal access for ${fullName}.`)}`);
+}
+
+export async function deleteFamilyAccount(formData: FormData) {
+  const userId = String(formData.get("userId") ?? "");
+  const fullName = String(formData.get("fullName") ?? "family account");
+
+  if (!userId) {
+    redirect("/dashboard/family-access?message=Missing family account ID.");
+  }
+
+  const admin = await requireStaffAdminClient();
+
+  await admin.from("profiles").delete().eq("id", userId).eq("role", "family");
+  const { error } = await admin.auth.admin.deleteUser(userId);
+
+  if (error) {
+    redirect(`/dashboard/family-access?message=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect(`/dashboard/family-access?message=${encodeURIComponent(`Deleted ${fullName}.`)}`);
+}
+
+async function requireStaffAdminClient() {
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const profileRole = (profile as { role?: string | null } | null)?.role;
+
+  if (!isStaffRole(profileRole) || !staffRoles.has(profileRole)) {
+    redirect("/dashboard/family-access?message=Only staff can manage family accounts.");
+  }
+
+  try {
+    return createAdminClient();
+  } catch {
+    redirect(
+      "/dashboard/family-access?message=Missing Supabase service role key in Vercel environment variables."
+    );
+  }
+}
