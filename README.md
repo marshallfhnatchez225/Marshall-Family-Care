@@ -1,6 +1,6 @@
 # Marshall Family Care Portal
 
-A starter care coordination portal for Marshall Family Care, built with Next.js App Router, Supabase authentication, and Vercel deployment in mind.
+A private family portal for Marshall Family Care, built with Next.js, Supabase, and Vercel.
 
 ## Included
 
@@ -9,9 +9,10 @@ A starter care coordination portal for Marshall Family Care, built with Next.js 
 - Supabase auth callback route
 - Login and sign out actions
 - Staff-only family account creation
-- Protected dashboard layout
-- Dashboard pages for overview, families, services, messages, family access, and settings
-- Responsive CSS foundation
+- Family access email invitations
+- Family portal for pre-arrangement, post-arrangement, and aftercare tasks
+- Staff dashboard pages for overview, families, services, messages, family access, and settings
+- Responsive maroon and gold UI foundation
 - Vercel project configuration
 - Environment variable example file
 
@@ -22,134 +23,3 @@ A starter care coordination portal for Marshall Family Care, built with Next.js 
 
 ```bash
 npm install
-```
-
-3. Copy the environment example:
-
-```bash
-cp .env.example .env.local
-```
-
-4. Add your Supabase values to `.env.local`:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
-```
-
-5. Start the app:
-
-```bash
-npm run dev
-```
-
-6. Open `http://localhost:3000`.
-
-## Supabase Setup
-
-1. Create a new project in Supabase.
-2. Go to Project Settings, then API.
-3. Copy the Project URL into `NEXT_PUBLIC_SUPABASE_URL`.
-4. Copy the anon public key into `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-5. In Authentication settings, add redirect URLs:
-
-```text
-http://localhost:3000/auth/callback
-https://your-vercel-domain.vercel.app/auth/callback
-```
-
-6. Enable email authentication.
-7. Disable public sign-ups in Supabase Auth settings. Family accounts should be created by staff from inside the portal.
-8. Copy the service role key from Project Settings, then API. Add it to `SUPABASE_SERVICE_ROLE_KEY` only in `.env.local` and Vercel environment variables. Never expose or commit this key.
-
-## Optional Profiles Table
-
-The starter includes a TypeScript placeholder for a `profiles` table. You can create it in Supabase SQL Editor:
-
-```sql
-create table public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  full_name text,
-  role text check (role in ('admin', 'staff', 'service_director', 'family')),
-  loved_one_name text,
-  preferred_phone text,
-  assigned_director text,
-  portal_progress integer default 0,
-  portal_status text default 'Not started',
-  open_requests integer default 0,
-  last_portal_activity timestamptz,
-  created_at timestamptz default now() not null
-);
-
-alter table public.profiles enable row level security;
-
-create policy "Users can read their own profile"
-on public.profiles for select
-using (auth.uid() = id);
-
-create policy "Users can update their own portal progress"
-on public.profiles for update
-to authenticated
-using (auth.uid() = id)
-with check (auth.uid() = id);
-```
-
-## Creating the First Staff Account
-
-Because family sign-up is intentionally closed, create the first staff user from the Supabase dashboard:
-
-1. Go to Authentication, then Users.
-2. Add a staff user with an email and temporary password.
-3. Copy the new user ID.
-4. Add a matching row in the `profiles` table:
-
-```sql
-insert into public.profiles (id, full_name, role)
-values ('USER_ID_FROM_AUTH', 'Staff Name', 'admin');
-```
-
-That staff user can then sign in and use Dashboard, then Family Access to create family credentials.
-
-## Updating Existing Profiles Table
-
-If your `profiles` table already exists, add the family portal display fields:
-
-```sql
-alter table public.profiles
-add column if not exists loved_one_name text,
-add column if not exists preferred_phone text,
-add column if not exists assigned_director text,
-add column if not exists portal_progress integer default 0,
-add column if not exists portal_status text default 'Not started',
-add column if not exists open_requests integer default 0,
-add column if not exists last_portal_activity timestamptz;
-```
-
-## Vercel Deployment
-
-1. Upload or push these files to GitHub.
-2. Import the repository in Vercel.
-3. Add these environment variables in Vercel Project Settings:
-
-```text
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-NEXT_PUBLIC_SITE_URL
-SUPABASE_SERVICE_ROLE_KEY
-```
-
-4. Set `NEXT_PUBLIC_SITE_URL` to your Vercel production URL.
-5. Deploy.
-
-## Manual GitHub Upload
-
-If you do not want to use git locally, create a new GitHub repository and upload the files and folders from this workspace. Keep `.env.local` private and upload `.env.example` instead.
-
-## Suggested Next Steps
-
-- Connect dashboard pages to real Supabase tables.
-- Add arrangement-to-family assignment tables so family members only see their approved loved one's details.
-- Add arrangement forms and service scheduling actions.
-- Add row level security policies before storing sensitive care information.
