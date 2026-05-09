@@ -14,12 +14,31 @@ export default async function DashboardPage() {
     data: { user }
   } = await supabase.auth.getUser();
   const { data: profile } = user
-    ? await supabase.from("profiles").select("role").eq("id", user.id).single()
+    ? await supabase
+        .from("profiles")
+        .select("role, full_name, loved_one_name, preferred_phone, assigned_director")
+        .eq("id", user.id)
+        .single()
     : { data: null };
-  const profileRole = (profile as { role?: string | null } | null)?.role;
+  const familyProfile = profile as {
+    role?: string | null;
+    full_name?: string | null;
+    loved_one_name?: string | null;
+    preferred_phone?: string | null;
+    assigned_director?: string | null;
+  } | null;
+  const profileRole = familyProfile?.role;
 
   if (profileRole === "family") {
-    return <FamilyPortal />;
+    return (
+      <FamilyPortal
+        assignedDirector={familyProfile?.assigned_director}
+        familyContact={familyProfile?.full_name}
+        lovedOneName={familyProfile?.loved_one_name}
+        preferredPhone={familyProfile?.preferred_phone}
+        userId={user?.id}
+      />
+    );
   }
 
   return (

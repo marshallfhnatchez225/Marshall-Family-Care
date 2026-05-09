@@ -9,12 +9,15 @@ const staffRoles = new Set<StaffRole>(["admin", "staff", "service_director"]);
 
 export async function createFamilyAccount(formData: FormData) {
   const fullName = String(formData.get("fullName") ?? "").trim();
+  const lovedOneName = String(formData.get("lovedOneName") ?? "").trim();
+  const preferredPhone = String(formData.get("preferredPhone") ?? "").trim();
+  const assignedDirector = String(formData.get("assignedDirector") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  if (!fullName || !email || password.length < 8) {
+  if (!fullName || !lovedOneName || !email || password.length < 8) {
     redirect(
-      "/dashboard/family-access?message=Enter a name, email, and temporary password with at least 8 characters."
+      "/dashboard/family-access?message=Enter family name, loved one name, email, and a temporary password with at least 8 characters."
     );
   }
 
@@ -54,6 +57,9 @@ export async function createFamilyAccount(formData: FormData) {
     email_confirm: true,
     user_metadata: {
       full_name: fullName,
+      loved_one_name: lovedOneName,
+      preferred_phone: preferredPhone,
+      assigned_director: assignedDirector,
       role: "family"
     }
   });
@@ -69,6 +75,9 @@ export async function createFamilyAccount(formData: FormData) {
   const { error: profileError } = await admin.from("profiles").upsert({
     id: data.user.id,
     full_name: fullName,
+    loved_one_name: lovedOneName,
+    preferred_phone: preferredPhone || null,
+    assigned_director: assignedDirector || null,
     role: "family"
   });
 

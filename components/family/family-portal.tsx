@@ -61,7 +61,15 @@ type PortalState = {
   forms: FamilyForm[];
 };
 
-const storageKey = "marshall-family-portal";
+type FamilyPortalProps = {
+  assignedDirector?: string | null;
+  familyContact?: string | null;
+  lovedOneName?: string | null;
+  preferredPhone?: string | null;
+  userId?: string | null;
+};
+
+const defaultStorageKey = "marshall-family-portal";
 
 const formDefinitions: FamilyForm[] = [
   {
@@ -69,8 +77,8 @@ const formDefinitions: FamilyForm[] = [
     title: "Death Certificate Information",
     status: "Needs review",
     fields: [
-      ["Legal name", "Evelyn Ruth Marshall"],
-      ["Other names used", "Evelyn R. Hinton"],
+      ["Legal name", ""],
+      ["Other names used", ""],
       ["Date of birth", "1948-03-12"],
       ["Date of death", "2026-05-03"],
       ["Place of death", "Jackson, Mississippi"],
@@ -78,7 +86,7 @@ const formDefinitions: FamilyForm[] = [
       ["Marital status", "Widowed"],
       ["Education", "Some college"],
       ["Occupation", "Retired educator"],
-      ["Informant", "Angela Brooks, daughter"],
+      ["Informant", ""],
       ["Parent information", "Thomas Hinton and Leola Price Hinton"],
       ["Sensitive ID note", "SSN collected by staff phone call only"]
     ]
@@ -88,11 +96,11 @@ const formDefinitions: FamilyForm[] = [
     title: "Obituary Information",
     status: "Draft saved",
     fields: [
-      ["Opening life story", "Evelyn was a patient teacher, devoted mother, and faithful church member."],
-      ["Survived by", "Children Angela Brooks and Marcus Marshall; five grandchildren"],
-      ["Preceded in death by", "Husband Robert Marshall"],
-      ["Service wording", "Celebration of Life at New Hope Missionary Baptist Church"],
-      ["Charity preference", "New Hope Scholarship Fund"],
+      ["Opening life story", ""],
+      ["Survived by", ""],
+      ["Preceded in death by", ""],
+      ["Service wording", ""],
+      ["Charity preference", ""],
       ["Publication notes", "Please share with family before newspaper submission"]
     ]
   },
@@ -103,9 +111,9 @@ const formDefinitions: FamilyForm[] = [
     notice:
       "This online acknowledgment creates a review record for Marshall Funeral Home staff. It does not replace counsel-approved authorization language unless Marshall has approved it for use.",
     fields: [
-      ["Authorizing person", "Angela Brooks"],
+      ["Authorizing person", ""],
       ["Relationship", "Daughter / next of kin"],
-      ["Phone", "(601) 555-0184"],
+      ["Phone", ""],
       ["Acknowledgment", "I understand staff will review this authorization before relying on it."],
       ["Timestamp", "Captured automatically on submit"]
     ]
@@ -115,10 +123,10 @@ const formDefinitions: FamilyForm[] = [
     title: "General Family Information",
     status: "Reviewed",
     fields: [
-      ["Primary contact", "Angela Brooks"],
-      ["Preferred phone", "(601) 555-0184"],
-      ["Email", "angela@example.com"],
-      ["Billing contact", "Marcus Marshall"],
+      ["Primary contact", ""],
+      ["Preferred phone", ""],
+      ["Email", ""],
+      ["Billing contact", ""],
       ["Communication preference", "Text for urgent items, email for documents"]
     ]
   },
@@ -127,11 +135,11 @@ const formDefinitions: FamilyForm[] = [
     title: "Next Of Kin Information",
     status: "Needs clarification",
     fields: [
-      ["Primary next of kin", "Angela Brooks, daughter"],
-      ["Additional next of kin", "Marcus Marshall, son"],
+      ["Primary next of kin", ""],
+      ["Additional next of kin", ""],
       ["Relationship order notes", "Both children are coordinating together"],
       ["Dispute or concern", "No known dispute"],
-      ["Staff note", "Confirm Marcus phone number"]
+      ["Staff note", ""]
     ]
   },
   {
@@ -149,14 +157,51 @@ const formDefinitions: FamilyForm[] = [
   }
 ];
 
-const initialState: PortalState = {
+function buildInitialState({
+  assignedDirector,
+  familyContact,
+  lovedOneName,
+  preferredPhone
+}: FamilyPortalProps = {}): PortalState {
+  const contact = familyContact?.trim() || "Family Contact";
+  const decedent = lovedOneName?.trim() || "Loved One";
+  const phone = preferredPhone?.trim() || "Phone not provided";
+  const director = assignedDirector?.trim() || "Marshall Family Care Staff";
+  const contactFirstName = contact.split(" ")[0] || "Family";
+  const decedentFirstName = decedent.split(" ")[0] || "Loved";
+
+  const forms = formDefinitions.map((form) => ({
+    ...form,
+    fields: form.fields.map(([label, value]) => {
+      if (label === "Legal name") return [label, decedent] as [string, string];
+      if (label === "Other names used") return [label, ""] as [string, string];
+      if (label === "Informant") return [label, contact] as [string, string];
+      if (label === "Authorizing person") return [label, contact] as [string, string];
+      if (label === "Phone") return [label, phone] as [string, string];
+      if (label === "Primary contact") return [label, contact] as [string, string];
+      if (label === "Preferred phone") return [label, phone] as [string, string];
+      if (label === "Email") return [label, ""] as [string, string];
+      if (label === "Primary next of kin") return [label, contact] as [string, string];
+      if (label === "Additional next of kin") return [label, ""] as [string, string];
+      if (label === "Staff note") return [label, `Confirm ${contactFirstName}'s preferred phone number`] as [string, string];
+      if (label === "Opening life story") {
+        return [label, `${decedentFirstName} will be remembered with care by family and friends.`] as [string, string];
+      }
+      if (label === "Survived by") return [label, ""] as [string, string];
+      if (label === "Billing contact") return [label, contact] as [string, string];
+      if (label === "Relationship order notes") return [label, "Family will confirm relationship details with staff"] as [string, string];
+      return [label, value] as [string, string];
+    })
+  }));
+
+  return {
   familyView: "home",
   selectedFormId: "death-certificate",
   case: {
-    decedent: "Evelyn Ruth Marshall",
-    familyContact: "Angela Brooks",
-    contactPhone: "(601) 555-0184",
-    assignedDirector: "Tanya Williams",
+    decedent,
+    familyContact: contact,
+    contactPhone: phone,
+    assignedDirector: director,
     caseStatus: "Arrangements in progress",
     deathCertificateStatus: "Filed with the state, waiting on certified copies",
     service: {
@@ -176,12 +221,12 @@ const initialState: PortalState = {
       ["Video", "Memorial slideshow requested"]
     ],
     obituaryDraft:
-      "Evelyn Ruth Marshall, 78, of Jackson, Mississippi, passed peacefully surrounded by family. She will be remembered for her steady faith, her years in the classroom, and the care she gave to every generation of her family.",
-    photos: ["Portrait for obituary", "Church choir photo", "Family reunion photo"],
+      `${decedent} will be remembered with love by family and friends. Marshall Funeral Home staff will help the family review and prepare the obituary draft before publication.`,
+    photos: [`${decedentFirstName} portrait for obituary`, "Family remembrance photo"],
     uploads: [
-      { name: "driver-license-angela.pdf", type: "ID", status: "Private, staff reviewed" },
+      { name: `${contactFirstName.toLowerCase()}-id.pdf`, type: "ID", status: "Private, staff reviewed" },
       { name: "cemetery-paperwork.jpg", type: "Cemetery", status: "Needs staff review" },
-      { name: "evelyn-portrait.png", type: "Photo", status: "Approved for obituary" }
+      { name: `${decedentFirstName.toLowerCase()}-portrait.png`, type: "Photo", status: "Approved for obituary" }
     ],
     changeRequests: [
       { category: "Obituary", text: "Please add the scholarship fund note before publishing.", status: "Open" },
@@ -192,18 +237,15 @@ const initialState: PortalState = {
       { category: "Marker help", text: "Family would like options for a companion marker.", status: "Open" }
     ],
     messages: [
-      { from: "Tanya Williams", text: "We received the cemetery paperwork and will review it this afternoon." },
-      { from: "Angela Brooks", text: "Thank you. Please call me before the obituary is submitted." }
+      { from: director, text: "Welcome to the Marshall Family Care Portal. Please review the requested items and send any questions here." }
     ]
   },
-  forms: formDefinitions.map((form) => ({
-    ...form,
-    fields: form.fields.map(([label, value]) => [label, value])
-  }))
-};
+  forms
+  };
+}
 
-function cloneInitialState() {
-  return JSON.parse(JSON.stringify(initialState)) as PortalState;
+function cloneState(state: PortalState) {
+  return JSON.parse(JSON.stringify(state)) as PortalState;
 }
 
 function isCompleteStatus(status: string) {
@@ -222,8 +264,15 @@ function titleCase(value: string) {
   return value.replace(/([A-Z])/g, " $1").replace(/^./, (char) => char.toUpperCase());
 }
 
-export function FamilyPortal() {
-  const [state, setState] = useState<PortalState>(cloneInitialState);
+export function FamilyPortal(props: FamilyPortalProps) {
+  const seededState = useMemo(() => buildInitialState(props), [
+    props.assignedDirector,
+    props.familyContact,
+    props.lovedOneName,
+    props.preferredPhone
+  ]);
+  const storageKey = props.userId ? `${defaultStorageKey}-${props.userId}` : defaultStorageKey;
+  const [state, setState] = useState<PortalState>(() => cloneState(seededState));
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -231,11 +280,13 @@ export function FamilyPortal() {
       const stored = window.localStorage.getItem(storageKey);
       if (stored) {
         setState(JSON.parse(stored) as PortalState);
+      } else {
+        setState(cloneState(seededState));
       }
     } finally {
       setIsLoaded(true);
     }
-  }, []);
+  }, [seededState, storageKey]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -284,7 +335,7 @@ export function FamilyPortal() {
   }
 
   function resetDemo() {
-    setState(cloneInitialState());
+    setState(cloneState(seededState));
   }
 
   function handleMessage(event: FormEvent<HTMLFormElement>) {
@@ -521,7 +572,7 @@ function FamilyHome({
         </div>
         <aside className="family-hero-panel">
           <strong>Next requested action</strong>
-          <p>Review the next of kin details and confirm Marcus Marshall&apos;s phone number.</p>
+          <p>Review the next of kin details and confirm the family&apos;s preferred phone number.</p>
           <button className="family-primary-button" onClick={() => onOpenForm("next-of-kin")} type="button">
             Open requested form
           </button>

@@ -52,6 +52,18 @@ export default async function FamilyAccessPage({
               <input name="fullName" placeholder="Full name" required />
             </label>
             <label>
+              Loved one name
+              <input name="lovedOneName" placeholder="Decedent full name" required />
+            </label>
+            <label>
+              Family phone
+              <input name="preferredPhone" placeholder="(555) 555-5555" />
+            </label>
+            <label>
+              Assigned director
+              <input name="assignedDirector" placeholder="Staff name" />
+            </label>
+            <label>
               Family member email
               <input name="email" type="email" placeholder="name@example.com" required />
             </label>

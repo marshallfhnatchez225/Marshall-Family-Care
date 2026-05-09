@@ -14,17 +14,26 @@ export type Database = {
           id: string;
           full_name: string | null;
           role: "admin" | "staff" | "service_director" | "family" | null;
+          loved_one_name: string | null;
+          preferred_phone: string | null;
+          assigned_director: string | null;
           created_at: string;
         };
         Insert: {
           id: string;
           full_name?: string | null;
           role?: "admin" | "staff" | "service_director" | "family" | null;
+          loved_one_name?: string | null;
+          preferred_phone?: string | null;
+          assigned_director?: string | null;
           created_at?: string;
         };
         Update: {
           full_name?: string | null;
           role?: "admin" | "staff" | "service_director" | "family" | null;
+          loved_one_name?: string | null;
+          preferred_phone?: string | null;
+          assigned_director?: string | null;
         };
         Relationships: [];
       };

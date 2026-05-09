@@ -73,6 +73,9 @@ create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text,
   role text check (role in ('admin', 'staff', 'service_director', 'family')),
+  loved_one_name text,
+  preferred_phone text,
+  assigned_director text,
   created_at timestamptz default now() not null
 );
 
@@ -98,6 +101,17 @@ values ('USER_ID_FROM_AUTH', 'Staff Name', 'admin');
 ```
 
 That staff user can then sign in and use Dashboard, then Family Access to create family credentials.
+
+## Updating Existing Profiles Table
+
+If your `profiles` table already exists, add the family portal display fields:
+
+```sql
+alter table public.profiles
+add column if not exists loved_one_name text,
+add column if not exists preferred_phone text,
+add column if not exists assigned_director text;
+```
 
 ## Vercel Deployment
 
