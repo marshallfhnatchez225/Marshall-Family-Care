@@ -17,6 +17,10 @@ export type Database = {
           loved_one_name: string | null;
           preferred_phone: string | null;
           assigned_director: string | null;
+          portal_progress: number | null;
+          portal_status: string | null;
+          open_requests: number | null;
+          last_portal_activity: string | null;
           created_at: string;
         };
         Insert: {
@@ -26,6 +30,10 @@ export type Database = {
           loved_one_name?: string | null;
           preferred_phone?: string | null;
           assigned_director?: string | null;
+          portal_progress?: number | null;
+          portal_status?: string | null;
+          open_requests?: number | null;
+          last_portal_activity?: string | null;
           created_at?: string;
         };
         Update: {
@@ -34,6 +42,10 @@ export type Database = {
           loved_one_name?: string | null;
           preferred_phone?: string | null;
           assigned_director?: string | null;
+          portal_progress?: number | null;
+          portal_status?: string | null;
+          open_requests?: number | null;
+          last_portal_activity?: string | null;
         };
         Relationships: [];
       };

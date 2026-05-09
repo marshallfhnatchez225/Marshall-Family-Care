@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { signOut } from "@/app/(auth)/login/actions";
+import { updateFamilyProgress } from "@/app/dashboard/family-progress/actions";
 
 type FormStatus =
   | "Needs review"
@@ -303,6 +304,23 @@ export function FamilyPortal(props: FamilyPortalProps) {
   const reviewCount = state.forms.filter((form) => isPendingStatus(form.status)).length;
   const openRequests = state.case.changeRequests.filter((item) => item.status === "Open").length;
   const activeForm = state.forms.find((form) => form.id === state.selectedFormId) ?? state.forms[0];
+  const portalStatus =
+    completionPercent >= 100
+      ? "Pre-arrangement complete"
+      : reviewCount > 0
+        ? "Needs staff review"
+        : "In progress";
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    void updateFamilyProgress({
+      lastPortalActivity: new Date().toISOString(),
+      openRequests,
+      portalProgress: completionPercent,
+      portalStatus
+    });
+  }, [completionPercent, isLoaded, openRequests, portalStatus]);
 
   function setFamilyView(familyView: PortalState["familyView"]) {
     setState((current) => ({ ...current, familyView }));

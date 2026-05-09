@@ -76,6 +76,10 @@ export async function createFamilyAccount(formData: FormData) {
     id: data.user.id,
     full_name: fullName,
     loved_one_name: lovedOneName,
+    last_portal_activity: null,
+    open_requests: 0,
+    portal_progress: 0,
+    portal_status: "Not started",
     preferred_phone: preferredPhone || null,
     assigned_director: assignedDirector || null,
     role: "family"
@@ -125,6 +129,7 @@ export async function updateFamilyAccount(formData: FormData) {
     id: userId,
     full_name: fullName,
     loved_one_name: lovedOneName,
+    portal_status: "Updated by staff",
     preferred_phone: preferredPhone || null,
     assigned_director: assignedDirector || null,
     role: "family"
@@ -179,6 +184,10 @@ export async function repairFamilyAccountByEmail(formData: FormData) {
     id: authUser.id,
     full_name: fullName,
     loved_one_name: lovedOneName,
+    last_portal_activity: null,
+    open_requests: 0,
+    portal_progress: 0,
+    portal_status: "Repaired by staff",
     preferred_phone: preferredPhone || null,
     assigned_director: assignedDirector || null,
     role: "family"

@@ -4,7 +4,7 @@ import {
   repairFamilyAccountByEmail,
   updateFamilyAccount
 } from "./actions";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getFamilyRecords, type StaffFamilyRecord } from "@/lib/family-admin";
 import { isStaffRole, type StaffRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -38,44 +38,11 @@ export default async function FamilyAccessPage({
   const canManageFamilyAccess = Boolean(
     isStaffRole(profileRole) && staffRoles.has(profileRole)
   );
-  let familyProfiles: Array<{
-    id: string;
-    full_name: string | null;
-    loved_one_name: string | null;
-    preferred_phone: string | null;
-    assigned_director: string | null;
-    created_at: string;
-    email?: string | null;
-  }> = [];
+  let familyProfiles: StaffFamilyRecord[] = [];
 
   if (canManageFamilyAccess) {
     try {
-      const admin = createAdminClient();
-      const { data: profileRows } = await admin
-        .from("profiles")
-        .select("id, full_name, loved_one_name, preferred_phone, assigned_director, created_at")
-        .eq("role", "family")
-        .order("created_at", { ascending: false });
-      const { data: authRows } = await admin.auth.admin.listUsers();
-      const profileMap = new Map((profileRows ?? []).map((family) => [family.id, family]));
-
-      for (const authUser of authRows?.users ?? []) {
-        if (authUser.user_metadata?.role === "family" && !profileMap.has(authUser.id)) {
-          profileMap.set(authUser.id, {
-            id: authUser.id,
-            full_name: (authUser.user_metadata?.full_name as string | undefined) ?? authUser.email ?? "",
-            loved_one_name: (authUser.user_metadata?.loved_one_name as string | undefined) ?? "",
-            preferred_phone: (authUser.user_metadata?.preferred_phone as string | undefined) ?? "",
-            assigned_director: (authUser.user_metadata?.assigned_director as string | undefined) ?? "",
-            created_at: authUser.created_at ?? ""
-          });
-        }
-      }
-
-      familyProfiles = Array.from(profileMap.values()).map((family) => {
-        const authUser = authRows?.users.find((candidate) => candidate.id === family.id);
-        return { ...family, email: authUser?.email ?? null };
-      });
+      familyProfiles = await getFamilyRecords();
     } catch {
       familyProfiles = [];
     }

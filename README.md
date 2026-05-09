@@ -76,6 +76,10 @@ create table public.profiles (
   loved_one_name text,
   preferred_phone text,
   assigned_director text,
+  portal_progress integer default 0,
+  portal_status text default 'Not started',
+  open_requests integer default 0,
+  last_portal_activity timestamptz,
   created_at timestamptz default now() not null
 );
 
@@ -84,6 +88,12 @@ alter table public.profiles enable row level security;
 create policy "Users can read their own profile"
 on public.profiles for select
 using (auth.uid() = id);
+
+create policy "Users can update their own portal progress"
+on public.profiles for update
+to authenticated
+using (auth.uid() = id)
+with check (auth.uid() = id);
 ```
 
 ## Creating the First Staff Account
@@ -110,7 +120,11 @@ If your `profiles` table already exists, add the family portal display fields:
 alter table public.profiles
 add column if not exists loved_one_name text,
 add column if not exists preferred_phone text,
-add column if not exists assigned_director text;
+add column if not exists assigned_director text,
+add column if not exists portal_progress integer default 0,
+add column if not exists portal_status text default 'Not started',
+add column if not exists open_requests integer default 0,
+add column if not exists last_portal_activity timestamptz;
 ```
 
 ## Vercel Deployment
