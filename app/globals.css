@@ -175,6 +175,40 @@ select:focus {
   color: #86402f;
 }
 
+.account-page {
+  max-width: 760px;
+}
+
+.account-panel {
+  display: grid;
+  gap: 24px;
+}
+
+.password-change-form {
+  max-width: 460px;
+}
+
+.family-account-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 10px 20px;
+  background: rgba(248, 245, 239, 0.96);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 8px 24px rgba(60, 26, 31, 0.08);
+}
+
+.family-account-bar span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .dashboard-shell {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
@@ -211,7 +245,7 @@ select:focus {
   display: grid;
 }
 
-.brand-block span:last-child {
+brand-block span:last-child {
   color: #e8c982;
   font-size: 0.9rem;
 }
@@ -1067,7 +1101,8 @@ select:focus {
   .topbar,
   .section-heading,
   .table-row,
-  .message-card {
+  .message-card,
+  .family-account-bar {
     align-items: stretch;
     flex-direction: column;
   }
