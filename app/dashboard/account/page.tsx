@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,6 +19,11 @@ export default async function AccountPage() {
           </p>
         </div>
         <ChangePasswordForm />
+        <div className="button-row">
+          <Link className="button secondary" href="/dashboard">
+            Back to portal
+          </Link>
+        </div>
       </section>
     </div>
   );
