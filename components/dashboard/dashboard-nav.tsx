@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   CalendarDays,
   Home,
+  KeyRound,
   LogOut,
   MessageSquare,
   Settings,
@@ -20,12 +21,14 @@ const staffNavItems = [
   { href: "/dashboard/services", label: "Services", icon: CalendarDays },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/family-access", label: "Family Access", icon: UserPlus },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings }
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/account", label: "Change Password", icon: KeyRound }
 ];
 
 const familyNavItems = [
   { href: "/dashboard", label: "Task Manager", icon: Home },
-  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare }
+  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+  { href: "/dashboard/account", label: "Change Password", icon: KeyRound }
 ];
 
 export function DashboardNav({ role }: DashboardNavProps) {
