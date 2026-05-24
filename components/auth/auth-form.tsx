@@ -1,4 +1,5 @@
-import { requestPasswordReset, signIn } from "@/app/(auth)/login/actions";
+import { signIn } from "@/app/(auth)/login/actions";
+import Link from "next/link";
 
 type AuthFormProps = {
   message?: string;
@@ -26,9 +27,9 @@ export function AuthForm({ message }: AuthFormProps) {
         <button formAction={signIn} className="button primary">
           Sign in
         </button>
-        <button formAction={requestPasswordReset} className="button secondary" formNoValidate>
+        <Link className="button secondary" href="/forgot-password">
           Forgot password?
-        </button>
+        </Link>
       </div>
       <p className="helper-text">
         Family portal accounts are created by Marshall Family Care staff.
