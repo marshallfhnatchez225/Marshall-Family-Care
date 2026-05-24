@@ -1,10 +1,20 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-function getOrigin() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : undefined;
+async function getOrigin() {
+  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const protocol = requestHeaders.get("x-forwarded-proto") ?? "https";
+
+  return host ? `${protocol}://${host}` : undefined;
 }
 
 export async function signIn(formData: FormData) {
@@ -32,7 +42,7 @@ export async function requestPasswordReset(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const origin = getOrigin();
+  const origin = await getOrigin();
   const redirectTo = origin ? `${origin}/auth/callback?next=/reset-password` : undefined;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
