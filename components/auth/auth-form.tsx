@@ -1,4 +1,4 @@
-import { signIn } from "@/app/(auth)/login/actions";
+import { requestPasswordReset, signIn } from "@/app/(auth)/login/actions";
 
 type AuthFormProps = {
   message?: string;
@@ -25,6 +25,9 @@ export function AuthForm({ message }: AuthFormProps) {
       <div className="button-row">
         <button formAction={signIn} className="button primary">
           Sign in
+        </button>
+        <button formAction={requestPasswordReset} className="button secondary" formNoValidate>
+          Forgot password?
         </button>
       </div>
       <p className="helper-text">
