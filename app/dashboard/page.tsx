@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { FamilyPortal } from "@/components/family/family-portal";
 
@@ -33,13 +34,21 @@ export default async function DashboardPage() {
 
   if (effectiveRole === "family") {
     return (
-      <FamilyPortal
-        assignedDirector={familyProfile?.assigned_director}
-        familyContact={familyProfile?.full_name ?? user?.user_metadata?.full_name}
-        lovedOneName={familyProfile?.loved_one_name}
-        preferredPhone={familyProfile?.preferred_phone}
-        userId={user?.id}
-      />
+      <>
+        <div className="family-account-bar">
+          <span>{user?.email}</span>
+          <Link className="button secondary" href="/dashboard/account">
+            Change Password
+          </Link>
+        </div>
+        <FamilyPortal
+          assignedDirector={familyProfile?.assigned_director}
+          familyContact={familyProfile?.full_name ?? user?.user_metadata?.full_name}
+          lovedOneName={familyProfile?.loved_one_name}
+          preferredPhone={familyProfile?.preferred_phone}
+          userId={user?.id}
+        />
+      </>
     );
   }
 
