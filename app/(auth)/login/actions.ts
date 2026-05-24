@@ -38,22 +38,22 @@ export async function requestPasswordReset(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
 
   if (!email) {
-    redirect("/login?message=Enter your email address to reset your password.");
+    redirect("/forgot-password?message=Enter your email address to reset your password.");
   }
 
   const supabase = await createClient();
   const origin = await getOrigin();
-  const redirectTo = origin ? `${origin}/auth/callback?next=/reset-password` : undefined;
+  const redirectTo = origin ? `${origin}/reset-password` : undefined;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo
   });
 
   if (error) {
-    redirect(`/login?message=${encodeURIComponent(error.message)}`);
+    redirect(`/forgot-password?message=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/login?message=Password reset email sent. Check your inbox and spam folder.");
+  redirect("/forgot-password?message=Password reset email sent. Check your inbox and spam folder.");
 }
 
 export async function signOut() {
