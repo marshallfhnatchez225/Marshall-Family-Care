@@ -1,0 +1,2 @@
+Temporary Codex GitHub write permission check.
+Created only to verify repository write access.
