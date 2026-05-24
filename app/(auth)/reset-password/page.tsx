@@ -2,13 +2,55 @@
 
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [message, setMessage] = useState(searchParams.get("message") ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    async function prepareRecoverySession() {
+      const supabase = createClient();
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const errorDescription = hashParams.get("error_description");
+
+      if (errorDescription) {
+        setMessage(errorDescription);
+        setIsReady(true);
+        return;
+      }
+
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+
+        window.history.replaceState(null, "", window.location.pathname);
+
+        if (error) {
+          setMessage(error.message);
+        }
+      }
+
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        setMessage("Open the reset link from your email first, then enter a new password here.");
+      }
+
+      setIsReady(true);
+    }
+
+    prepareRecoverySession();
+  }, []);
 
   async function updatePassword(formData: FormData) {
     const password = String(formData.get("password") ?? "");
@@ -34,6 +76,7 @@ function ResetPasswordForm() {
       return;
     }
 
+    await supabase.auth.signOut();
     router.push("/login?message=Password updated. Please sign in with your new password.");
   }
 
@@ -60,7 +103,7 @@ function ResetPasswordForm() {
           required
         />
       </label>
-      <button className="button primary" disabled={isSubmitting} type="submit">
+      <button className="button primary" disabled={isSubmitting || !isReady} type="submit">
         {isSubmitting ? "Updating..." : "Update password"}
       </button>
     </form>
