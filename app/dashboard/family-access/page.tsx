@@ -63,15 +63,15 @@ export default async function FamilyAccessPage({
         {canManageFamilyAccess ? (
           <form action={createFamilyAccount} className="settings-form">
             <label>
-              Family member name
-              <input name="fullName" placeholder="Full name" required />
+              Name of Loved One
+              <input name="lovedOneName" placeholder="Loved one's full name" required />
             </label>
             <label>
-              Loved one name
-              <input name="lovedOneName" placeholder="Decedent full name" required />
+              Next of Kin
+              <input name="fullName" placeholder="Next of kin full name" required />
             </label>
             <label>
-              Family phone
+              Phone number
               <input name="preferredPhone" placeholder="(555) 555-5555" />
             </label>
             <label>
@@ -112,15 +112,15 @@ export default async function FamilyAccessPage({
               <input name="email" type="email" placeholder="name@example.com" required />
             </label>
             <label>
-              Family member
-              <input name="fullName" placeholder="Full name" required />
+              Name of Loved One
+              <input name="lovedOneName" placeholder="Loved one's full name" required />
             </label>
             <label>
-              Loved one
-              <input name="lovedOneName" placeholder="Decedent full name" required />
+              Next of Kin
+              <input name="fullName" placeholder="Next of kin full name" required />
             </label>
             <label>
-              Phone
+              Phone number
               <input name="preferredPhone" placeholder="(555) 555-5555" />
             </label>
             <label>
@@ -154,15 +154,15 @@ export default async function FamilyAccessPage({
                       <input value={family.email ?? "Email unavailable"} readOnly />
                     </label>
                     <label>
-                      Family member
-                      <input name="fullName" defaultValue={family.full_name ?? ""} required />
-                    </label>
-                    <label>
-                      Loved one
+                      Name of Loved One
                       <input name="lovedOneName" defaultValue={family.loved_one_name ?? ""} required />
                     </label>
                     <label>
-                      Phone
+                      Next of Kin
+                      <input name="fullName" defaultValue={family.full_name ?? ""} required />
+                    </label>
+                    <label>
+                      Phone number
                       <input name="preferredPhone" defaultValue={family.preferred_phone ?? ""} />
                     </label>
                     <label>
