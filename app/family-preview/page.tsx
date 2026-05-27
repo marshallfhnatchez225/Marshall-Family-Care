@@ -1,4 +1,4 @@
-import { FamilyPortal } from "@/components/family/family-portal";
+import { FamilyPreviewPortal } from "@/components/family/family-preview-portal";
 
 export default function FamilyPreviewPage() {
   return (
@@ -16,13 +16,7 @@ export default function FamilyPreviewPage() {
       >
         Preview mode for layout review only. No information is saved to a real family account.
       </section>
-      <FamilyPortal
-        assignedDirector="Marshall Funeral Home"
-        familyContact="Next of Kin"
-        lovedOneName="Name of Loved One"
-        preferredPhone="601-442-6300"
-        userId="preview-family"
-      />
+      <FamilyPreviewPortal />
     </main>
   );
 }
