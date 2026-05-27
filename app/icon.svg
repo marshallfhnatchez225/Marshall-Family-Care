@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="maroon" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#6f1d2f" />
+      <stop offset="0.48" stop-color="#4e121d" />
+      <stop offset="1" stop-color="#2f0b13" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff2b4" />
+      <stop offset="0.35" stop-color="#d8ad2f" />
+      <stop offset="0.72" stop-color="#b8892f" />
+      <stop offset="1" stop-color="#7a571b" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#16060a" flood-opacity="0.35" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#maroon)" />
+  <path d="M72 90h368v332H72z" fill="none" stroke="#d8ad2f" stroke-opacity="0.32" stroke-width="12" rx="52" />
+  <text x="256" y="347" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="285" font-weight="700" fill="url(#gold)" filter="url(#shadow)">M</text>
+  <path d="M151 141c51-29 159-31 211 0" fill="none" stroke="#fff2b4" stroke-width="10" stroke-linecap="round" opacity="0.42" />
+</svg>
