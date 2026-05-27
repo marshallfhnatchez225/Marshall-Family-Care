@@ -13,27 +13,31 @@ function formatActivity(value: string | null) {
 const summaryBarStyle = {
   display: "grid",
   gap: "8px",
-  gridTemplateColumns: "repeat(4, minmax(0, 1fr))"
+  gridTemplateColumns: "repeat(4, minmax(96px, 1fr))"
 };
 
 const compactMetricStyle = {
   alignItems: "center",
-  display: "flex",
-  gap: "10px",
-  justifyContent: "space-between",
-  minHeight: "54px",
-  padding: "10px 12px"
+  display: "grid",
+  gap: "4px",
+  justifyItems: "center",
+  minHeight: "58px",
+  padding: "8px 10px",
+  textAlign: "center" as const
 };
 
 const compactMetricLabelStyle = {
-  fontSize: "0.86rem",
+  fontSize: "0.78rem",
   fontWeight: 700,
-  lineHeight: 1.2
+  lineHeight: 1.15,
+  overflowWrap: "anywhere" as const
 };
 
 const compactMetricValueStyle = {
-  fontSize: "1.35rem",
-  lineHeight: 1
+  fontSize: "1.25rem",
+  lineHeight: 1,
+  maxWidth: "100%",
+  overflowWrap: "anywhere" as const
 };
 
 export default async function FamiliesPage() {
