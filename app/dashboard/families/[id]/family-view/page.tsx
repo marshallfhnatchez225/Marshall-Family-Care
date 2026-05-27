@@ -42,6 +42,19 @@ export default async function FamilyViewPage({ params }: FamilyViewPageProps) {
 
   return (
     <div className="page-stack">
+      <style>{`
+        .staff-family-preview {
+          overflow: hidden;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #ffffff;
+          box-shadow: 0 8px 24px rgba(60, 26, 31, 0.06);
+        }
+
+        .staff-family-preview .family-portal {
+          min-height: 760px;
+        }
+      `}</style>
       <div className="section-heading">
         <div>
           <h2>Family View</h2>
