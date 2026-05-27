@@ -2,7 +2,28 @@ import { FamilyPortal } from "@/components/family/family-portal";
 
 export default function FamilyPreviewPage() {
   return (
-    <main>
+    <main className="family-preview-page">
+      <style>
+        {`
+          .family-preview-page .family-content {
+            display: flex;
+            flex-direction: column;
+          }
+
+          .family-preview-page .family-metric-grid {
+            order: -1;
+            margin: 0 0 22px;
+          }
+
+          .family-preview-page .family-hero {
+            order: 0;
+          }
+
+          .family-preview-page .family-two-column {
+            order: 1;
+          }
+        `}
+      </style>
       <section
         aria-label="Preview mode notice"
         style={{
