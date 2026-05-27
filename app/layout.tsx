@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ContactNumberHelper } from "@/components/family/contact-number-helper";
 import { DeathCertificateStageHelper } from "@/components/family/death-certificate-stage-helper";
 import "./globals.css";
 
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body>
         {children}
         <DeathCertificateStageHelper />
+        <ContactNumberHelper />
       </body>
     </html>
   );
