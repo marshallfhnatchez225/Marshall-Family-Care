@@ -10,6 +10,32 @@ function formatActivity(value: string | null) {
   }).format(new Date(value));
 }
 
+const summaryBarStyle = {
+  display: "grid",
+  gap: "8px",
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))"
+};
+
+const compactMetricStyle = {
+  alignItems: "center",
+  display: "flex",
+  gap: "10px",
+  justifyContent: "space-between",
+  minHeight: "54px",
+  padding: "10px 12px"
+};
+
+const compactMetricLabelStyle = {
+  fontSize: "0.86rem",
+  fontWeight: 700,
+  lineHeight: 1.2
+};
+
+const compactMetricValueStyle = {
+  fontSize: "1.35rem",
+  lineHeight: 1
+};
+
 export default async function FamiliesPage() {
   let families: StaffFamilyRecord[] = [];
 
@@ -30,6 +56,7 @@ export default async function FamiliesPage() {
     (total, family) => total + (family.open_requests ?? 0),
     0
   );
+  const needSetup = families.filter((family) => !family.loved_one_name).length;
 
   return (
     <div className="page-stack">
@@ -44,22 +71,22 @@ export default async function FamiliesPage() {
           Add family
         </a>
       </div>
-      <section className="grid stats-grid">
-        <article className="metric-card">
-          <span>Family accounts</span>
-          <strong>{families.length}</strong>
+      <section aria-label="Family overview summary" style={summaryBarStyle}>
+        <article className="metric-card" style={compactMetricStyle}>
+          <span style={compactMetricLabelStyle}>Family accounts</span>
+          <strong style={compactMetricValueStyle}>{families.length}</strong>
         </article>
-        <article className="metric-card">
-          <span>Average progress</span>
-          <strong>{averageProgress}%</strong>
+        <article className="metric-card" style={compactMetricStyle}>
+          <span style={compactMetricLabelStyle}>Average progress</span>
+          <strong style={compactMetricValueStyle}>{averageProgress}%</strong>
         </article>
-        <article className="metric-card">
-          <span>Open requests</span>
-          <strong>{activeRequests}</strong>
+        <article className="metric-card" style={compactMetricStyle}>
+          <span style={compactMetricLabelStyle}>Open requests</span>
+          <strong style={compactMetricValueStyle}>{activeRequests}</strong>
         </article>
-        <article className="metric-card">
-          <span>Need setup</span>
-          <strong>{families.filter((family) => !family.loved_one_name).length}</strong>
+        <article className="metric-card" style={compactMetricStyle}>
+          <span style={compactMetricLabelStyle}>Need setup</span>
+          <strong style={compactMetricValueStyle}>{needSetup}</strong>
         </article>
       </section>
       <section className="table-panel">
