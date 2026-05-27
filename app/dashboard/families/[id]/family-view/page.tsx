@@ -6,5 +6,5 @@ type FamilyViewPageProps = {
 
 export default async function FamilyViewPage({ params }: FamilyViewPageProps) {
   const { id } = await params;
-  redirect(`/staff-family-view/${id}`);
+  redirect(`/dashboard/families/${id}`);
 }
