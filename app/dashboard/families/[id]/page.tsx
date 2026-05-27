@@ -40,11 +40,8 @@ export default async function FamilyDetailPage({ params }: FamilyDetailPageProps
           <Link className="button secondary" href="/dashboard/families">
             Back to families
           </Link>
-          <Link className="button secondary" href="/dashboard/family-access">
+          <Link className="button primary" href="/dashboard/family-access">
             Manage access
-          </Link>
-          <Link className="button primary" href={`/staff-family-view/${family.id}`}>
-            View as family
           </Link>
         </div>
       </div>
