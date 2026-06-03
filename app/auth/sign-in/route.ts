@@ -10,6 +10,8 @@ export async function POST(request: Request) {
     redirect("/login?message=Enter your email and password.");
   }
 
+  let loginError: string | null = null;
+
   try {
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword({
@@ -18,15 +20,15 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      redirect(`/login?message=${encodeURIComponent(error.message)}`);
+      loginError = error.message;
     }
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown connection error";
-    redirect(
-      `/login?message=${encodeURIComponent(
-        `Could not connect to Supabase. Check the Vercel Supabase environment variables. Details: ${detail}`
-      )}`
-    );
+    loginError = `Could not connect to Supabase. Check the Vercel Supabase environment variables. Details: ${detail}`;
+  }
+
+  if (loginError) {
+    redirect(`/login?message=${encodeURIComponent(loginError)}`);
   }
 
   redirect("/dashboard");
