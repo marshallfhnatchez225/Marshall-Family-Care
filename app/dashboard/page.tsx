@@ -10,24 +10,40 @@ const staffStats = [
 ];
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-  const { data: profile } = user
-    ? await supabase
-        .from("profiles")
-        .select("role, full_name, loved_one_name, preferred_phone, assigned_director")
-        .eq("id", user.id)
-        .single()
-    : { data: null };
-  const familyProfile = profile as {
+  let user: {
+    id?: string;
+    email?: string;
+    user_metadata?: Record<string, string | undefined>;
+  } | null = null;
+  let familyProfile: {
     role?: string | null;
     full_name?: string | null;
     loved_one_name?: string | null;
     preferred_phone?: string | null;
     assigned_director?: string | null;
-  } | null;
+  } | null = null;
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user: authUser }
+    } = await supabase.auth.getUser();
+
+    user = authUser;
+
+    if (authUser) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, full_name, loved_one_name, preferred_phone, assigned_director")
+        .eq("id", authUser.id)
+        .single();
+
+      familyProfile = profile as typeof familyProfile;
+    }
+  } catch {
+    familyProfile = null;
+  }
+
   const profileRole = familyProfile?.role;
   const authRole = user?.user_metadata?.role;
   const effectiveRole = profileRole ?? authRole;
@@ -40,12 +56,15 @@ export default async function DashboardPage() {
           <Link className="button secondary" href="/dashboard/account">
             Change Password
           </Link>
+          <Link className="button secondary" href="/auth/sign-out">
+            Sign out
+          </Link>
         </div>
         <FamilyPortal
-          assignedDirector={familyProfile?.assigned_director}
+          assignedDirector={familyProfile?.assigned_director ?? user?.user_metadata?.assigned_director}
           familyContact={familyProfile?.full_name ?? user?.user_metadata?.full_name}
-          lovedOneName={familyProfile?.loved_one_name}
-          preferredPhone={familyProfile?.preferred_phone}
+          lovedOneName={familyProfile?.loved_one_name ?? user?.user_metadata?.loved_one_name}
+          preferredPhone={familyProfile?.preferred_phone ?? user?.user_metadata?.preferred_phone}
           userId={user?.id}
         />
       </>
