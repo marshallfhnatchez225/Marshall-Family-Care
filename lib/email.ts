@@ -23,6 +23,33 @@ export async function sendFamilyInviteEmail({
     };
   }
 
+  const plainText = [
+    `Hello ${fullName},`,
+    "",
+    `Marshall Family Care has created portal access for ${lovedOneName}.",
+    "",
+    `Login link: ${loginUrl}`,
+    `Username: ${email}`,
+    `Temporary password: ${password}`,
+    "",
+    "Please keep this information private. If you need immediate help, call 601-442-6300.",
+    "",
+    "Marshall Family Care"
+  ].join("\n");
+
+  const html = [
+    '<div style="font-family: Arial, sans-serif; color: #241719; line-height: 1.6;">',
+    '<h2 style="color: #6f1d2a;">Marshall Family Care Portal</h2>',
+    `<p>Hello ${escapeHtml(fullName)},</p>`,
+    `<p>Marshall Family Care has created portal access for <strong>${escapeHtml(lovedOneName)}</strong>.</p>`,
+    `<p><strong>Login link:</strong> <a href="${loginUrl}">${loginUrl}</a></p>`,
+    `<p><strong>Username:</strong> ${escapeHtml(email)}</p>`,
+    `<p><strong>Temporary password:</strong> ${escapeHtml(password)}</p>`,
+    "<p>Please keep this information private. If you need immediate help, call <strong>601-442-6300</strong>.</p>",
+    "<p>Marshall Family Care</p>",
+    "</div>"
+  ].join("");
+
   let response: Response;
 
   try {
@@ -36,31 +63,8 @@ export async function sendFamilyInviteEmail({
         from,
         to: [email],
         subject: "Your Marshall Family Care Portal access",
-        text: [
-          `Hello ${fullName},`,
-          "",
-          `Marshall Family Care has created portal access for ${lovedOneName}.",
-          "",
-          `Login link: ${loginUrl}`,
-          `Username: ${email}`,
-          `Temporary password: ${password}`,
-          "",
-          "Please keep this information private. If you need immediate help, call 601-442-6300.",
-          "",
-          "Marshall Family Care"
-        ].join("\n"),
-        html: `
-          <div style="font-family: Arial, sans-serif; color: #241719; line-height: 1.6;">
-            <h2 style="color: #6f1d2a;">Marshall Family Care Portal</h2>
-            <p>Hello ${escapeHtml(fullName)},</p>
-            <p>Marshall Family Care has created portal access for <strong>${escapeHtml(lovedOneName)}</strong>.</p>
-            <p><strong>Login link:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
-            <p><strong>Username:</strong> ${escapeHtml(email)}</p>
-            <p><strong>Temporary password:</strong> ${escapeHtml(password)}</p>
-            <p>Please keep this information private. If you need immediate help, call <strong>601-442-6300</strong>.</p>
-            <p>Marshall Family Care</p>
-          </div>
-        `
+        text: plainText,
+        html
       })
     });
   } catch (error) {
