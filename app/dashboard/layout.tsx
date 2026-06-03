@@ -10,6 +10,7 @@ export default async function DashboardLayout({
 }) {
   let userEmail: string | undefined;
   let profileRole: string | null | undefined;
+  let loginRedirect: string | null = null;
 
   try {
     const supabase = await createClient();
@@ -19,29 +20,29 @@ export default async function DashboardLayout({
     } = await supabase.auth.getUser();
 
     if (userError) {
-      redirect(`/login?message=${encodeURIComponent(userError.message)}`);
-    }
-
-    if (!user) {
-      redirect("/login");
-    }
-
-    userEmail = user.email;
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError) {
-      profileRole = user.user_metadata?.role;
+      loginRedirect = `/login?message=${encodeURIComponent(userError.message)}`;
+    } else if (!user) {
+      loginRedirect = "/login";
     } else {
-      profileRole = (profile as { role?: string | null } | null)?.role;
+      userEmail = user.email;
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      profileRole = profileError
+        ? user.user_metadata?.role
+        : (profile as { role?: string | null } | null)?.role;
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Dashboard connection error";
-    redirect(`/login?message=${encodeURIComponent(message)}`);
+    loginRedirect = `/login?message=${encodeURIComponent(message)}`;
+  }
+
+  if (loginRedirect) {
+    redirect(loginRedirect);
   }
 
   if (profileRole === "family") {
