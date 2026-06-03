@@ -1,6 +1,5 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { FamilyPortal } from "@/components/family/family-portal";
 
 const staffStats = [
   { label: "Active arrangements", value: "12" },
@@ -17,10 +16,6 @@ export default async function DashboardPage() {
   } | null = null;
   let familyProfile: {
     role?: string | null;
-    full_name?: string | null;
-    loved_one_name?: string | null;
-    preferred_phone?: string | null;
-    assigned_director?: string | null;
   } | null = null;
 
   try {
@@ -34,7 +29,7 @@ export default async function DashboardPage() {
     if (authUser) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role, full_name, loved_one_name, preferred_phone, assigned_director")
+        .select("role")
         .eq("id", authUser.id)
         .single();
 
@@ -49,26 +44,7 @@ export default async function DashboardPage() {
   const effectiveRole = profileRole ?? authRole;
 
   if (effectiveRole === "family") {
-    return (
-      <>
-        <div className="family-account-bar">
-          <span>{user?.email}</span>
-          <Link className="button secondary" href="/dashboard/account">
-            Change Password
-          </Link>
-          <Link className="button secondary" href="/auth/sign-out">
-            Sign out
-          </Link>
-        </div>
-        <FamilyPortal
-          assignedDirector={familyProfile?.assigned_director ?? user?.user_metadata?.assigned_director}
-          familyContact={familyProfile?.full_name ?? user?.user_metadata?.full_name}
-          lovedOneName={familyProfile?.loved_one_name ?? user?.user_metadata?.loved_one_name}
-          preferredPhone={familyProfile?.preferred_phone ?? user?.user_metadata?.preferred_phone}
-          userId={user?.id}
-        />
-      </>
-    );
+    redirect("/family-preview");
   }
 
   return (
