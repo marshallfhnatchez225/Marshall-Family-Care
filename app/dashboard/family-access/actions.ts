@@ -52,44 +52,77 @@ export async function createFamilyAccount(formData: FormData) {
     );
   }
 
-  const { data, error } = await admin.auth.admin.createUser({
+  const familyMetadata = {
+    full_name: fullName,
+    loved_one_name: lovedOneName,
+    preferred_phone: preferredPhone,
+    assigned_director: assignedDirector,
+    role: "family"
+  };
+
+  const createResult = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: {
-      full_name: fullName,
-      loved_one_name: lovedOneName,
-      preferred_phone: preferredPhone,
-      assigned_director: assignedDirector,
-      role: "family"
-    }
+    user_metadata: familyMetadata
   });
 
-  if (error || !data.user) {
-    redirect(
-      `/dashboard/family-access?message=${encodeURIComponent(
-        error?.message ?? "Could not create family account."
-      )}`
-    );
+  let familyUser = createResult.data.user;
+  let repairedExisting = false;
+
+  if (createResult.error || !familyUser) {
+    const message = createResult.error?.message ?? "Could not create family account.";
+    const mayAlreadyExist = message.toLowerCase().includes("already") || message.toLowerCase().includes("registered") || message.toLowerCase().includes("exists");
+
+    if (!mayAlreadyExist) {
+      redirect(`/dashboard/family-access?message=${encodeURIComponent(message)}`);
+    }
+
+    const { data: users, error: listError } = await admin.auth.admin.listUsers();
+
+    if (listError) {
+      redirect(`/dashboard/family-access?message=${encodeURIComponent(listError.message)}`);
+    }
+
+    const existingUser = users.users.find((candidate) => candidate.email?.toLowerCase() === email);
+
+    if (!existingUser) {
+      redirect(`/dashboard/family-access?message=${encodeURIComponent(message)}`);
+    }
+
+    const { data: updateData, error: updateError } = await admin.auth.admin.updateUserById(existingUser.id, {
+      email_confirm: true,
+      password,
+      user_metadata: familyMetadata
+    });
+
+    if (updateError || !updateData.user) {
+      redirect(
+        `/dashboard/family-access?message=${encodeURIComponent(
+          updateError?.message ?? "Could not repair existing family account."
+        )}`
+      );
+    }
+
+    familyUser = updateData.user;
+    repairedExisting = true;
   }
 
   const { error: profileError } = await admin.from("profiles").upsert({
-    id: data.user.id,
+    id: familyUser.id,
     full_name: fullName,
     loved_one_name: lovedOneName,
     last_portal_activity: null,
     open_requests: 0,
     portal_progress: 0,
-    portal_status: "Not started",
+    portal_status: repairedExisting ? "Repaired by staff" : "Not started",
     preferred_phone: preferredPhone || null,
     assigned_director: assignedDirector || null,
     role: "family"
   });
 
   if (profileError) {
-    redirect(
-      `/dashboard/family-access?message=${encodeURIComponent(profileError.message)}`
-    );
+    redirect(`/dashboard/family-access?message=${encodeURIComponent(profileError.message)}`);
   }
 
   const emailResult = await sendFamilyInviteEmail({
@@ -102,14 +135,14 @@ export async function createFamilyAccount(formData: FormData) {
   if (!emailResult.sent) {
     redirect(
       `/dashboard/family-access?message=${encodeURIComponent(
-        emailResult.error ?? `Family account created for ${fullName}, but email was not sent.`
+        `${repairedExisting ? "Family account repaired" : "Family account created"} for ${fullName}. Email was not sent automatically, so provide the temporary password manually.`
       )}`
     );
   }
 
   redirect(
     `/dashboard/family-access?message=${encodeURIComponent(
-      `Family account created for ${fullName}. Login details were emailed to ${email}.`
+      `${repairedExisting ? "Family account repaired" : "Family account created"} for ${fullName}. Login details were emailed to ${email}.`
     )}`
   );
 }
