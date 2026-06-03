@@ -7,7 +7,7 @@ type AuthFormProps = {
 
 export function AuthForm({ message }: AuthFormProps) {
   return (
-    <form className="auth-form">
+    <form action={signIn} className="auth-form">
       {message ? <p className="form-message">{message}</p> : null}
       <label>
         Email
@@ -24,7 +24,7 @@ export function AuthForm({ message }: AuthFormProps) {
         />
       </label>
       <div className="button-row">
-        <button formAction={signIn} className="button primary">
+        <button className="button primary" type="submit">
           Sign in
         </button>
         <Link className="button secondary" href="/forgot-password">
