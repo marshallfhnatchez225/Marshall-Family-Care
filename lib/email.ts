@@ -26,7 +26,7 @@ export async function sendFamilyInviteEmail({
   const plainText = [
     `Hello ${fullName},`,
     "",
-    `Marshall Family Care has created portal access for ${lovedOneName}.",
+    "Marshall Family Care has created portal access for " + lovedOneName + ".",
     "",
     `Login link: ${loginUrl}`,
     `Username: ${email}`,
