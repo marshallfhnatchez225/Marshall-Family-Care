@@ -1,6 +1,17 @@
 type FamilyPreviewPageProps = {
-  searchParams: Promise<{ view?: string; form?: string }>;
+  searchParams: Promise<{ view?: string; form?: string; stage?: string }>;
 };
+
+const deathCertificateStages = [
+  "Not started",
+  "Information needed from family",
+  "Ready for staff review",
+  "Filed with the state",
+  "Waiting on state approval",
+  "Certified copies ordered",
+  "Certified copies ready for pickup",
+  "Completed"
+];
 
 const forms = [
   {
@@ -104,6 +115,9 @@ export default async function FamilyPreviewPage({ searchParams }: FamilyPreviewP
     ? String(params.view)
     : "home";
   const activeForm = forms.find((form) => form.id === params.form) ?? forms[0];
+  const selectedStage = deathCertificateStages.includes(params.stage ?? "")
+    ? String(params.stage)
+    : "Filed with the state";
   const completionPercent = 33;
   const reviewCount = 5;
 
@@ -207,6 +221,23 @@ export default async function FamilyPreviewPage({ searchParams }: FamilyPreviewP
               </div>
               <section className="family-form-panel">
                 <div className="family-panel-header"><div><h2>{activeForm.title}</h2><p className="family-helper-text">Status: <strong>{activeForm.status}</strong></p></div><span className="family-status-chip">{activeForm.status}</span></div>
+                {activeForm.id === "death-certificate" ? (
+                  <section className="death-certificate-stage-picker" aria-label="Death certificate stage">
+                    <strong>Death certificate stage</strong>
+                    <p>Choose a preselected stage for layout review. Preview changes are shown in the URL only.</p>
+                    <div className="death-certificate-stage-options">
+                      {deathCertificateStages.map((stage) => (
+                        <a
+                          className={`death-certificate-stage-button ${selectedStage === stage ? "active" : ""}`}
+                          href={`/family-preview?view=pre&form=death-certificate&stage=${encodeURIComponent(stage)}`}
+                          key={stage}
+                        >
+                          {stage}
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
                 <div className="family-form-grid">
                   {activeForm.fields.map(([label, value]) => {
                     const isLong = value.length > 58 || label.toLowerCase().includes("note") || label.includes("Acknowledgment");
@@ -228,7 +259,7 @@ export default async function FamilyPreviewPage({ searchParams }: FamilyPreviewP
               <section className="family-section-title"><div><h1>Post-Arrangement</h1><p>View what is currently selected and request changes before details are finalized.</p></div></section>
               <section className="family-two-column">
                 <div className="family-panel"><h2>Current selections</h2><div className="family-data-list">{selectedItems.map(([item, value]) => <div className="family-data-row" key={item}><strong>{item}</strong><span>{value}</span></div>)}</div></div>
-                <div className="family-panel"><h2>Current case status</h2><div className="family-timeline"><div className="family-timeline-item"><strong>Arrangement status</strong><span>Arrangements in progress</span></div><div className="family-timeline-item"><strong>Death certificate</strong><span>Filed with the state, waiting on certified copies</span></div><div className="family-timeline-item"><strong>Obituary</strong><span>Draft waiting on family confirmation</span></div></div></div>
+                <div className="family-panel"><h2>Current case status</h2><div className="family-timeline"><div className="family-timeline-item"><strong>Arrangement status</strong><span>Arrangements in progress</span></div><div className="family-timeline-item"><strong>Death certificate</strong><span>{selectedStage}, waiting on certified copies</span></div><div className="family-timeline-item"><strong>Obituary</strong><span>Draft waiting on family confirmation</span></div></div></div>
               </section>
             </>
           ) : null}
