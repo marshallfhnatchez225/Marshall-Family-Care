@@ -1,4 +1,3 @@
-import { signIn } from "@/app/(auth)/login/actions";
 import Link from "next/link";
 
 type AuthFormProps = {
@@ -7,7 +6,7 @@ type AuthFormProps = {
 
 export function AuthForm({ message }: AuthFormProps) {
   return (
-    <form action={signIn} className="auth-form">
+    <form action="/auth/sign-in" className="auth-form" method="post">
       {message ? <p className="form-message">{message}</p> : null}
       <label>
         Email
