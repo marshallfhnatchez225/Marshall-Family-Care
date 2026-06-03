@@ -33,6 +33,9 @@ export function AuthForm({ message }: AuthFormProps) {
       <p className="helper-text">
         Family portal accounts are created by Marshall Family Care staff.
       </p>
+      <p className="helper-text">
+        Seeing the wrong account? <Link href="/auth/sign-out">Sign out current user</Link>.
+      </p>
     </form>
   );
 }
