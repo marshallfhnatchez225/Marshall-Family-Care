@@ -1,6 +1,11 @@
-type FamilyPreviewPageProps = {
-  searchParams: Promise<{ view?: string; form?: string; stage?: string }>;
-};
+const forms = [
+  ["Death Certificate Information", "Needs review"],
+  ["Obituary Information", "Draft saved"],
+  ["Permission To Embalm", "Not submitted"],
+  ["General Family Information", "Reviewed"],
+  ["Next Of Kin Information", "Needs clarification"],
+  ["Veteran, Church, Cemetery Details", "Draft saved"]
+];
 
 const deathCertificateStages = [
   "Not started",
@@ -13,114 +18,7 @@ const deathCertificateStages = [
   "Completed"
 ];
 
-const forms = [
-  {
-    id: "death-certificate",
-    title: "Death Certificate Information",
-    status: "Needs review",
-    fields: [
-      ["Legal name", "Name of Loved One"],
-      ["Date of birth", ""],
-      ["Date of death", ""],
-      ["Place of death", ""],
-      ["Residence", ""],
-      ["Marital status", ""],
-      ["Education", ""],
-      ["Occupation", ""],
-      ["Informant", "Next of Kin"],
-      ["Parent information", ""],
-      ["Sensitive ID note", "SSN collected by staff phone call only"]
-    ]
-  },
-  {
-    id: "obituary",
-    title: "Obituary Information",
-    status: "Draft saved",
-    fields: [
-      ["Opening life story", ""],
-      ["Survived by", ""],
-      ["Preceded in death by", ""],
-      ["Service wording", ""],
-      ["Charity preference", ""],
-      ["Publication notes", "Staff will review before publication"]
-    ]
-  },
-  {
-    id: "embalming",
-    title: "Permission To Embalm",
-    status: "Not submitted",
-    fields: [
-      ["Authorizing person", "Next of Kin"],
-      ["Relationship", ""],
-      ["Phone", "601-442-6300"],
-      ["Acknowledgment", "Staff will review this authorization before relying on it."]
-    ]
-  },
-  {
-    id: "family-info",
-    title: "General Family Information",
-    status: "Reviewed",
-    fields: [
-      ["Primary contact", "Next of Kin"],
-      ["Preferred phone", "601-442-6300"],
-      ["Email", ""],
-      ["Billing contact", ""],
-      ["Communication preference", "Text for urgent items, email for documents"]
-    ]
-  },
-  {
-    id: "next-of-kin",
-    title: "Next Of Kin Information",
-    status: "Needs clarification",
-    fields: [
-      ["Primary next of kin", "Next of Kin"],
-      ["Additional next of kin", ""],
-      ["Relationship order notes", "Family will confirm relationship details with staff"],
-      ["Dispute or concern", ""],
-      ["Staff note", "Confirm preferred phone number"]
-    ]
-  },
-  {
-    id: "veteran-church-cemetery",
-    title: "Veteran, Church, Cemetery Details",
-    status: "Draft saved",
-    fields: [
-      ["Veteran status", ""],
-      ["Church", ""],
-      ["Clergy", ""],
-      ["Cemetery", ""],
-      ["Plot details", ""],
-      ["Special rites", ""]
-    ]
-  }
-];
-
-const selectedItems = [
-  ["Service", "Saturday, May 16, 2026 at 11:00 AM"],
-  ["Location", "New Hope Missionary Baptist Church"],
-  ["Casket", "Cedarview Oak, selected"],
-  ["Vault", "Standard concrete vault"],
-  ["Flowers", "Casket spray, white lilies and greenery"],
-  ["Programs", "Tri-fold program, 150 copies"],
-  ["Transportation", "Family limousine, one vehicle"]
-];
-
-function isActive(current: string, expected: string) {
-  return current === expected ? "active" : "";
-}
-
-export default async function FamilyPreviewPage({ searchParams }: FamilyPreviewPageProps) {
-  const params = await searchParams;
-  const view = ["home", "pre", "post", "aftercare"].includes(params.view ?? "")
-    ? String(params.view)
-    : "home";
-  const activeForm = forms.find((form) => form.id === params.form) ?? forms[0];
-  const selectedStage = deathCertificateStages.includes(params.stage ?? "")
-    ? String(params.stage)
-    : "Filed with the state";
-  const completionPercent = 33;
-  const reviewCount = 5;
-
+export default function FamilyPreviewPage() {
   return (
     <main>
       <section
@@ -144,132 +42,129 @@ export default async function FamilyPreviewPage({ searchParams }: FamilyPreviewP
             <p>Primary contact: Next of Kin</p>
             <p>Director: Marshall Funeral Home</p>
             <div className="family-progress-bar" aria-label="Form completion">
-              <span style={{ width: `${completionPercent}%` }} />
+              <span style={{ width: "33%" }} />
             </div>
           </section>
+
           <nav className="family-sidebar-nav" aria-label="Family portal navigation">
-            <a className={`family-nav-button ${isActive(view, "home")}`} href="/family-preview?view=home">
+            <a className="family-nav-button active" href="#case-home">
               <span className="family-nav-label"><span className="family-complete-indicator">OK</span><span>Case home</span></span>
               <span className="family-mini-chip">Overview</span>
             </a>
-            <a className={`family-nav-button ${isActive(view, "pre")}`} href="/family-preview?view=pre&form=death-certificate">
+            <a className="family-nav-button" href="#pre-arrangement">
               <span className="family-nav-label"><span className="family-complete-indicator pending">-</span><span>Pre-Arrangement</span></span>
               <span className="family-mini-chip">33%</span>
             </a>
-            <a className={`family-nav-button ${isActive(view, "post")}`} href="/family-preview?view=post">
+            <a className="family-nav-button" href="#post-arrangement">
               <span className="family-nav-label"><span className="family-complete-indicator">OK</span><span>Post-Arrangement</span></span>
               <span className="family-mini-chip">Current</span>
             </a>
-            <a className={`family-nav-button ${isActive(view, "aftercare")}`} href="/family-preview?view=aftercare">
+            <a className="family-nav-button" href="#aftercare">
               <span className="family-nav-label"><span className="family-complete-indicator">OK</span><span>Aftercare</span></span>
               <span className="family-mini-chip">Support</span>
             </a>
           </nav>
+
           <div className="family-footer-note">
             Need immediate help? Call Marshall Funeral Home at (601) 442-6300 or (601) 384-2732.
           </div>
         </aside>
 
         <section className="family-content">
-          {view === "home" ? (
-            <>
-              <section className="family-metric-grid" style={{ marginTop: 0 }}>
-                <div className="family-metric"><strong>{completionPercent}%</strong><span>Pre-arrangement complete</span></div>
-                <div className="family-metric"><strong>{reviewCount}</strong><span>Forms awaiting staff review</span></div>
-                <div className="family-metric"><strong>3</strong><span>Uploads received</span></div>
-                <div className="family-metric"><strong>1</strong><span>Open requests</span></div>
-              </section>
-              <section className="family-hero">
-                <div>
-                  <span className="family-status-chip">Arrangements in progress</span>
-                  <h1>Welcome, Next</h1>
-                  <p>This preview uses regular links, so sections open even without app sign-in.</p>
-                  <div className="family-row-actions">
-                    <a className="family-primary-button" href="/family-preview?view=pre&form=death-certificate">Continue forms</a>
-                    <a className="family-ghost-button" href="/family-preview?view=post">Review selections</a>
-                    <a className="family-ghost-button" href="/family-preview?view=aftercare">Aftercare help</a>
-                  </div>
-                </div>
-                <aside className="family-hero-panel">
-                  <strong>Next requested action</strong>
-                  <p>Review the death certificate information and next of kin details.</p>
-                  <a className="family-primary-button" href="/family-preview?view=pre&form=death-certificate">Open death certificate</a>
-                </aside>
-              </section>
-              <section className="family-panel family-section-gap">
-                <div className="family-panel-header"><h2>Current checklist</h2><a className="family-quiet-button" href="/family-preview?view=pre&form=death-certificate">View all</a></div>
-                <div className="family-task-list">
-                  {forms.map((form) => (
-                    <div className="family-task" key={form.id}>
-                      <span className={form.status === "Reviewed" ? "family-complete-indicator" : "family-complete-indicator pending"}>{form.status === "Reviewed" ? "OK" : "-"}</span>
-                      <div><strong>{form.title}</strong><div className="family-meta">{form.status}</div></div>
-                      <a className="family-ghost-button" href={`/family-preview?view=pre&form=${form.id}`}>Open</a>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </>
-          ) : null}
+          <section className="family-metric-grid" id="case-home" style={{ marginTop: 0 }}>
+            <div className="family-metric"><strong>33%</strong><span>Pre-arrangement complete</span></div>
+            <div className="family-metric"><strong>5</strong><span>Forms awaiting staff review</span></div>
+            <div className="family-metric"><strong>3</strong><span>Uploads received</span></div>
+            <div className="family-metric"><strong>1</strong><span>Open requests</span></div>
+          </section>
 
-          {view === "pre" ? (
-            <>
-              <section className="family-section-title"><div><h1>Pre-Arrangement</h1><p>Complete the requested forms in manageable sections.</p></div></section>
-              <div className="family-tabs">
-                {forms.map((form) => (
-                  <a className={`family-tab-button ${activeForm.id === form.id ? "active" : ""}`} href={`/family-preview?view=pre&form=${form.id}`} key={form.id}>{form.status === "Reviewed" ? "OK " : ""}{form.title}</a>
+          <section className="family-hero">
+            <div>
+              <span className="family-status-chip">Arrangements in progress</span>
+              <h1>Welcome, Next</h1>
+              <p>This preview is a stable layout review page. Staff can use it to review the family-side flow without signing in.</p>
+              <div className="family-row-actions">
+                <a className="family-primary-button" href="#pre-arrangement">Continue forms</a>
+                <a className="family-ghost-button" href="#post-arrangement">Review selections</a>
+                <a className="family-ghost-button" href="#aftercare">Aftercare help</a>
+              </div>
+            </div>
+            <aside className="family-hero-panel">
+              <strong>Next requested action</strong>
+              <p>Review the death certificate information and next of kin details.</p>
+              <a className="family-primary-button" href="#pre-arrangement">Open death certificate</a>
+            </aside>
+          </section>
+
+          <section className="family-panel family-section-gap" id="pre-arrangement">
+            <div className="family-panel-header">
+              <div>
+                <h2>Pre-Arrangement</h2>
+                <p className="family-helper-text">Complete the requested forms in manageable sections.</p>
+              </div>
+            </div>
+            <div className="family-task-list">
+              {forms.map(([title, status]) => (
+                <div className="family-task" key={title}>
+                  <span className={status === "Reviewed" ? "family-complete-indicator" : "family-complete-indicator pending"}>{status === "Reviewed" ? "OK" : "-"}</span>
+                  <div><strong>{title}</strong><div className="family-meta">{status}</div></div>
+                  <span className="family-ghost-button">Open</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="family-form-panel family-section-gap">
+            <div className="family-panel-header">
+              <div>
+                <h2>Death Certificate Information</h2>
+                <p className="family-helper-text">Status: <strong>Needs review</strong></p>
+              </div>
+              <span className="family-status-chip">Needs review</span>
+            </div>
+
+            <section className="death-certificate-stage-picker" aria-label="Death certificate stage">
+              <strong>Death certificate stage</strong>
+              <p>Preselected stage choices for staff layout review.</p>
+              <div className="death-certificate-stage-options">
+                {deathCertificateStages.map((stage) => (
+                  <span className={`death-certificate-stage-button ${stage === "Filed with the state" ? "active" : ""}`} key={stage}>
+                    {stage}
+                  </span>
                 ))}
               </div>
-              <section className="family-form-panel">
-                <div className="family-panel-header"><div><h2>{activeForm.title}</h2><p className="family-helper-text">Status: <strong>{activeForm.status}</strong></p></div><span className="family-status-chip">{activeForm.status}</span></div>
-                {activeForm.id === "death-certificate" ? (
-                  <section className="death-certificate-stage-picker" aria-label="Death certificate stage">
-                    <strong>Death certificate stage</strong>
-                    <p>Choose a preselected stage for layout review. Preview changes are shown in the URL only.</p>
-                    <div className="death-certificate-stage-options">
-                      {deathCertificateStages.map((stage) => (
-                        <a
-                          className={`death-certificate-stage-button ${selectedStage === stage ? "active" : ""}`}
-                          href={`/family-preview?view=pre&form=death-certificate&stage=${encodeURIComponent(stage)}`}
-                          key={stage}
-                        >
-                          {stage}
-                        </a>
-                      ))}
-                    </div>
-                  </section>
-                ) : null}
-                <div className="family-form-grid">
-                  {activeForm.fields.map(([label, value]) => {
-                    const isLong = value.length > 58 || label.toLowerCase().includes("note") || label.includes("Acknowledgment");
-                    return (
-                      <label className={`family-field ${isLong ? "full" : ""}`} key={`${activeForm.id}-${label}`}>
-                        <span>{label}</span>
-                        {isLong ? <textarea defaultValue={value} /> : <input defaultValue={value} />}
-                      </label>
-                    );
-                  })}
-                </div>
-                <div className="family-form-actions"><p className="family-helper-text">Preview only. Changes are not saved.</p><div className="family-row-actions"><a className="family-ghost-button" href={`/family-preview?view=pre&form=${activeForm.id}`}>Save draft</a><a className="family-primary-button" href={`/family-preview?view=pre&form=${activeForm.id}`}>Submit for staff review</a></div></div>
-              </section>
-            </>
-          ) : null}
+            </section>
 
-          {view === "post" ? (
-            <>
-              <section className="family-section-title"><div><h1>Post-Arrangement</h1><p>View what is currently selected and request changes before details are finalized.</p></div></section>
-              <section className="family-two-column">
-                <div className="family-panel"><h2>Current selections</h2><div className="family-data-list">{selectedItems.map(([item, value]) => <div className="family-data-row" key={item}><strong>{item}</strong><span>{value}</span></div>)}</div></div>
-                <div className="family-panel"><h2>Current case status</h2><div className="family-timeline"><div className="family-timeline-item"><strong>Arrangement status</strong><span>Arrangements in progress</span></div><div className="family-timeline-item"><strong>Death certificate</strong><span>{selectedStage}, waiting on certified copies</span></div><div className="family-timeline-item"><strong>Obituary</strong><span>Draft waiting on family confirmation</span></div></div></div>
-              </section>
-            </>
-          ) : null}
+            <div className="family-form-grid">
+              <label className="family-field"><span>Legal name</span><input defaultValue="Name of Loved One" /></label>
+              <label className="family-field"><span>Date of birth</span><input /></label>
+              <label className="family-field"><span>Date of death</span><input /></label>
+              <label className="family-field"><span>Place of death</span><input /></label>
+              <label className="family-field"><span>Residence</span><input /></label>
+              <label className="family-field"><span>Informant</span><input defaultValue="Next of Kin" /></label>
+              <label className="family-field full"><span>Sensitive ID note</span><textarea defaultValue="SSN collected by staff phone call only" /></label>
+            </div>
+          </section>
 
-          {view === "aftercare" ? (
-            <>
-              <section className="family-section-title"><div><h1>Aftercare</h1><p>Request continued assistance after services.</p></div><span className="family-status-chip">Filed with the state</span></section>
-              <section className="family-three-column">{["Death certificate status", "Holiday flowers", "Headstone or marker help"].map((title) => <div className="family-panel" key={title}><h2>{title}</h2><p className="family-helper-text">Marshall staff can help with this request.</p><a className="family-ghost-button" href="/family-preview?view=aftercare">Request help</a></div>)}</section>
-            </>
-          ) : null}
+          <section className="family-two-column family-section-gap" id="post-arrangement">
+            <div className="family-panel">
+              <h2>Post-Arrangement</h2>
+              <div className="family-data-list">
+                <div className="family-data-row"><strong>Service</strong><span>To be added by staff</span></div>
+                <div className="family-data-row"><strong>Location</strong><span>To be added by staff</span></div>
+                <div className="family-data-row"><strong>Obituary</strong><span>Draft waiting on family confirmation</span></div>
+                <div className="family-data-row"><strong>Death certificate</strong><span>Filed with the state</span></div>
+              </div>
+            </div>
+            <div className="family-panel" id="aftercare">
+              <h2>Aftercare</h2>
+              <div className="family-resource-list">
+                <div className="family-resource-item"><strong>Death certificates</strong><span>Staff can update copy status here.</span></div>
+                <div className="family-resource-item"><strong>Holiday flowers</strong><span>Families can request future flower assistance.</span></div>
+                <div className="family-resource-item"><strong>Marker help</strong><span>Staff can help with headstone or marker requests.</span></div>
+              </div>
+            </div>
+          </section>
         </section>
       </main>
     </main>
