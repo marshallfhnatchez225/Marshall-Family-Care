@@ -1,10 +1,75 @@
 const forms = [
-  ["Death Certificate Information", "Needs review"],
-  ["Obituary Information", "Draft saved"],
-  ["Permission To Embalm", "Not submitted"],
-  ["General Family Information", "Reviewed"],
-  ["Next Of Kin Information", "Needs clarification"],
-  ["Veteran, Church, Cemetery Details", "Draft saved"]
+  {
+    id: "death-certificate",
+    title: "Death Certificate Information",
+    status: "Needs review",
+    fields: [
+      ["Legal name", "Name of Loved One"],
+      ["Date of birth", ""],
+      ["Date of death", ""],
+      ["Place of death", ""],
+      ["Residence", ""],
+      ["Informant", "Next of Kin"],
+      ["Sensitive ID note", "SSN collected by staff phone call only"]
+    ]
+  },
+  {
+    id: "obituary",
+    title: "Obituary Information",
+    status: "Draft saved",
+    fields: [
+      ["Opening life story", ""],
+      ["Survived by", ""],
+      ["Preceded in death by", ""],
+      ["Service wording", ""],
+      ["Publication notes", "Staff will review before publication"]
+    ]
+  },
+  {
+    id: "embalming",
+    title: "Permission To Embalm",
+    status: "Not submitted",
+    fields: [
+      ["Authorizing person", "Next of Kin"],
+      ["Relationship", ""],
+      ["Phone", "601-442-6300"],
+      ["Acknowledgment", "Staff will review this authorization before relying on it."]
+    ]
+  },
+  {
+    id: "family-info",
+    title: "General Family Information",
+    status: "Reviewed",
+    fields: [
+      ["Primary contact", "Next of Kin"],
+      ["Preferred phone", "601-442-6300"],
+      ["Email", ""],
+      ["Billing contact", ""]
+    ]
+  },
+  {
+    id: "next-of-kin",
+    title: "Next Of Kin Information",
+    status: "Needs clarification",
+    fields: [
+      ["Primary next of kin", "Next of Kin"],
+      ["Additional next of kin", ""],
+      ["Relationship order notes", ""],
+      ["Dispute or concern", ""]
+    ]
+  },
+  {
+    id: "veteran-church-cemetery",
+    title: "Veteran, Church, Cemetery Details",
+    status: "Draft saved",
+    fields: [
+      ["Veteran status", ""],
+      ["Church", ""],
+      ["Clergy", ""],
+      ["Cemetery", ""],
+      ["Plot details", ""]
+    ]
+  }
 ];
 
 const deathCertificateStages = [
@@ -17,6 +82,10 @@ const deathCertificateStages = [
   "Certified copies ready for pickup",
   "Completed"
 ];
+
+function isLongField(label: string, value: string) {
+  return value.length > 58 || label.toLowerCase().includes("note") || label.includes("Acknowledgment");
+}
 
 export default function FamilyPreviewPage() {
   return (
@@ -84,7 +153,7 @@ export default function FamilyPreviewPage() {
               <h1>Welcome, Next</h1>
               <p>This preview is a stable layout review page. Staff can use it to review the family-side flow without signing in.</p>
               <div className="family-row-actions">
-                <a className="family-primary-button" href="#pre-arrangement">Continue forms</a>
+                <a className="family-primary-button" href="#form-death-certificate">Continue forms</a>
                 <a className="family-ghost-button" href="#post-arrangement">Review selections</a>
                 <a className="family-ghost-button" href="#aftercare">Aftercare help</a>
               </div>
@@ -92,7 +161,7 @@ export default function FamilyPreviewPage() {
             <aside className="family-hero-panel">
               <strong>Next requested action</strong>
               <p>Review the death certificate information and next of kin details.</p>
-              <a className="family-primary-button" href="#pre-arrangement">Open death certificate</a>
+              <a className="family-primary-button" href="#form-death-certificate">Open death certificate</a>
             </aside>
           </section>
 
@@ -104,47 +173,60 @@ export default function FamilyPreviewPage() {
               </div>
             </div>
             <div className="family-task-list">
-              {forms.map(([title, status]) => (
-                <div className="family-task" key={title}>
-                  <span className={status === "Reviewed" ? "family-complete-indicator" : "family-complete-indicator pending"}>{status === "Reviewed" ? "OK" : "-"}</span>
-                  <div><strong>{title}</strong><div className="family-meta">{status}</div></div>
-                  <span className="family-ghost-button">Open</span>
+              {forms.map((form) => (
+                <div className="family-task" key={form.id}>
+                  <span className={form.status === "Reviewed" ? "family-complete-indicator" : "family-complete-indicator pending"}>{form.status === "Reviewed" ? "OK" : "-"}</span>
+                  <div><strong>{form.title}</strong><div className="family-meta">{form.status}</div></div>
+                  <a className="family-ghost-button" href={`#form-${form.id}`}>Open</a>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="family-form-panel family-section-gap">
-            <div className="family-panel-header">
-              <div>
-                <h2>Death Certificate Information</h2>
-                <p className="family-helper-text">Status: <strong>Needs review</strong></p>
+          {forms.map((form) => (
+            <section className="family-form-panel family-section-gap" id={`form-${form.id}`} key={form.id}>
+              <div className="family-panel-header">
+                <div>
+                  <h2>{form.title}</h2>
+                  <p className="family-helper-text">Status: <strong>{form.status}</strong></p>
+                </div>
+                <span className="family-status-chip">{form.status}</span>
               </div>
-              <span className="family-status-chip">Needs review</span>
-            </div>
 
-            <section className="death-certificate-stage-picker" aria-label="Death certificate stage">
-              <strong>Death certificate stage</strong>
-              <p>Preselected stage choices for staff layout review.</p>
-              <div className="death-certificate-stage-options">
-                {deathCertificateStages.map((stage) => (
-                  <span className={`death-certificate-stage-button ${stage === "Filed with the state" ? "active" : ""}`} key={stage}>
-                    {stage}
-                  </span>
-                ))}
+              {form.id === "death-certificate" ? (
+                <section className="death-certificate-stage-picker" aria-label="Death certificate stage" id="death-certificate-stage">
+                  <strong>Death certificate stage</strong>
+                  <p>Preselected stage choices for staff layout review.</p>
+                  <div className="death-certificate-stage-options">
+                    {deathCertificateStages.map((stage) => (
+                      <a className={`death-certificate-stage-button ${stage === "Filed with the state" ? "active" : ""}`} href="#death-certificate-stage" key={stage}>
+                        {stage}
+                      </a>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              <div className="family-form-grid">
+                {form.fields.map(([label, value]) => {
+                  const longField = isLongField(label, value);
+                  return (
+                    <label className={`family-field ${longField ? "full" : ""}`} key={`${form.id}-${label}`}>
+                      <span>{label}</span>
+                      {longField ? <textarea defaultValue={value} /> : <input defaultValue={value} />}
+                    </label>
+                  );
+                })}
+              </div>
+              <div className="family-form-actions">
+                <p className="family-helper-text">Preview only. Changes are not saved.</p>
+                <div className="family-row-actions">
+                  <a className="family-ghost-button" href="#pre-arrangement">Back to list</a>
+                  <a className="family-primary-button" href="#post-arrangement">Next section</a>
+                </div>
               </div>
             </section>
-
-            <div className="family-form-grid">
-              <label className="family-field"><span>Legal name</span><input defaultValue="Name of Loved One" /></label>
-              <label className="family-field"><span>Date of birth</span><input /></label>
-              <label className="family-field"><span>Date of death</span><input /></label>
-              <label className="family-field"><span>Place of death</span><input /></label>
-              <label className="family-field"><span>Residence</span><input /></label>
-              <label className="family-field"><span>Informant</span><input defaultValue="Next of Kin" /></label>
-              <label className="family-field full"><span>Sensitive ID note</span><textarea defaultValue="SSN collected by staff phone call only" /></label>
-            </div>
-          </section>
+          ))}
 
           <section className="family-two-column family-section-gap" id="post-arrangement">
             <div className="family-panel">
