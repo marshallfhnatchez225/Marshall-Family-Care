@@ -5,17 +5,13 @@ const watermarkStyle = {
   position: "fixed" as const,
   right: "clamp(18px, 6vw, 88px)",
   bottom: "clamp(24px, 8vh, 96px)",
-  width: "min(54vw, 620px)",
-  maxWidth: "620px",
+  width: 96,
+  height: 96,
   opacity: 0.08,
   pointerEvents: "none" as const,
+  transform: "scale(6.4)",
+  transformOrigin: "bottom right",
   zIndex: 0
-};
-
-const watermarkImageStyle = {
-  width: "100%",
-  height: "auto",
-  display: "block"
 };
 
 export default function FamilyPreviewPage() {
@@ -36,9 +32,9 @@ export default function FamilyPreviewPage() {
       </section>
       <main className="family-portal">
         <div aria-hidden="true" style={watermarkStyle}>
-          <MarshallLogo style={watermarkImageStyle} />
+          <MarshallLogo />
         </div>
-        <aside className="family-sidebar">
+        <aside className="family-sidebar" style={{ position: "relative", zIndex: 1 }}>
           <section className="family-case-card">
             <span className="family-status-chip">Arrangements in progress</span>
             <h2>Name of Loved One</h2>
