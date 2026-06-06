@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { deathCertificateCopyOptions, forms, isLongField } from "../form-data";
+import { deathCertificateCopyOptions, deathCertificateDropdownOptions, forms, isLongField } from "../form-data";
 import { MarshallLogo } from "../marshall-logo";
 
 const watermarkStyle = {
@@ -95,6 +95,7 @@ export default async function FamilyPreviewFormPage({ params }: { params: Promis
             <div className="family-form-grid">
               {form.fields.map(([label, value]) => {
                 const longField = isLongField(label, value);
+                const dropdownOptions = deathCertificateDropdownOptions[label];
                 return (
                   <label className={`family-field ${longField ? "full" : ""}`} key={`${form.id}-${label}`}>
                     <span>{label}</span>
@@ -102,6 +103,13 @@ export default async function FamilyPreviewFormPage({ params }: { params: Promis
                       <select defaultValue="">
                         <option value="" disabled>Select number</option>
                         {deathCertificateCopyOptions.map((option) => (
+                          <option value={option} key={option}>{option}</option>
+                        ))}
+                      </select>
+                    ) : dropdownOptions ? (
+                      <select defaultValue="">
+                        <option value="" disabled>Select option</option>
+                        {dropdownOptions.map((option) => (
                           <option value={option} key={option}>{option}</option>
                         ))}
                       </select>
