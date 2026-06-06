@@ -15,17 +15,17 @@ export const forms = [
       ["Date of Birth", ""],
       ["Place of Birth", ""],
       ["Social Security Number", "Collected securely by staff"],
-      ["Veteran", "Yes or No"],
+      ["Veteran", ""],
       ["Father's First Name", ""],
       ["Father's Middle Name", ""],
       ["Father's Last Name", ""],
       ["Mother's First Name", ""],
       ["Mother's Middle Name", ""],
       ["Mother's Maiden Name", ""],
-      ["Marital Status", "Married / Married, but separated / Widowed / Divorced / Never Married"],
+      ["Marital Status", ""],
       ["Surviving Spouse", ""],
       ["Spouse Maiden Name", ""],
-      ["Highest Level of Education", "8th Grade or Less / 9th-12th no diploma / High School or GED / Some College, No Degree / Associate Degree / Bachelor's Degree / Master's Degree / Doctorate Degree / Unknown"],
+      ["Highest Level of Education", ""],
       ["Occupation (Longest Job Held)", ""],
       ["Industry", ""],
       ["Informant", "Next of Kin"],
@@ -107,11 +107,31 @@ export const forms = [
 
 export const deathCertificateCopyOptions = Array.from({ length: 20 }, (_, index) => String(index + 1));
 
+export const deathCertificateDropdownOptions: Record<string, string[]> = {
+  "Highest Level of Education": [
+    "8th Grade or Less",
+    "9th-12th no diploma",
+    "High School or GED",
+    "Some College, No Degree",
+    "Associate Degree",
+    "Bachelor's Degree",
+    "Master's Degree",
+    "Doctorate Degree",
+    "Unknown"
+  ],
+  "Marital Status": [
+    "Married",
+    "Married, but separated",
+    "Widowed",
+    "Divorced",
+    "Never Married"
+  ],
+  Veteran: ["Yes", "No"]
+};
+
 export function isLongField(label: string, value: string) {
   const longLabels = [
     "Social Security Number",
-    "Marital Status",
-    "Highest Level of Education",
     "Informant Mailing Address",
     "Insurance Copy Note",
     "Viewing At Church",
