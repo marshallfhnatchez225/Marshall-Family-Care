@@ -116,17 +116,6 @@ const forms = [
   }
 ];
 
-const deathCertificateStages = [
-  "Not started",
-  "Information needed from family",
-  "Ready for staff review",
-  "Filed with the state",
-  "Waiting on state approval",
-  "Certified copies ordered",
-  "Certified copies ready for pickup",
-  "Completed"
-];
-
 const deathCertificateCopyOptions = Array.from({ length: 20 }, (_, index) => String(index + 1));
 
 function isLongField(label: string, value: string) {
@@ -252,20 +241,6 @@ export default function FamilyPreviewPage() {
                 </div>
                 <span className="family-status-chip">{form.status}</span>
               </div>
-
-              {form.id === "death-certificate" ? (
-                <section className="death-certificate-stage-picker" aria-label="Death certificate stage" id="death-certificate-stage">
-                  <strong>Death certificate stage</strong>
-                  <p>Preselected stage choices for staff layout review.</p>
-                  <div className="death-certificate-stage-options">
-                    {deathCertificateStages.map((stage) => (
-                      <a className={`death-certificate-stage-button ${stage === "Filed with the state" ? "active" : ""}`} href="#death-certificate-stage" key={stage}>
-                        {stage}
-                      </a>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
 
               <div className="family-form-grid">
                 {form.fields.map(([label, value]) => {
