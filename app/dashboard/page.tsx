@@ -9,14 +9,7 @@ const staffStats = [
 ];
 
 export default async function DashboardPage() {
-  let user: {
-    id?: string;
-    email?: string;
-    user_metadata?: Record<string, string | undefined>;
-  } | null = null;
-  let familyProfile: {
-    role?: string | null;
-  } | null = null;
+  let effectiveRole: string | undefined;
 
   try {
     const supabase = await createClient();
@@ -24,24 +17,21 @@ export default async function DashboardPage() {
       data: { user: authUser }
     } = await supabase.auth.getUser();
 
-    user = authUser;
-
     if (authUser) {
+      effectiveRole = authUser.user_metadata?.role;
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", authUser.id)
         .single();
 
-      familyProfile = profile as typeof familyProfile;
+      const profileRole = (profile as { role?: string | null } | null)?.role;
+      effectiveRole = profileRole ?? effectiveRole;
     }
   } catch {
-    familyProfile = null;
+    effectiveRole = undefined;
   }
-
-  const profileRole = familyProfile?.role;
-  const authRole = user?.user_metadata?.role;
-  const effectiveRole = profileRole ?? authRole;
 
   if (effectiveRole === "family") {
     redirect("/family-preview");
