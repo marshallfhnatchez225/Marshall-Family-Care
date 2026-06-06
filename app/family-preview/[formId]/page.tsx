@@ -2,6 +2,19 @@ import { notFound } from "next/navigation";
 import { deathCertificateCopyOptions, forms, isLongField } from "../form-data";
 import { MarshallLogo } from "../marshall-logo";
 
+const watermarkStyle = {
+  position: "fixed" as const,
+  right: "clamp(18px, 6vw, 88px)",
+  bottom: "clamp(24px, 8vh, 96px)",
+  width: 96,
+  height: 96,
+  opacity: 0.08,
+  pointerEvents: "none" as const,
+  transform: "scale(6.4)",
+  transformOrigin: "bottom right",
+  zIndex: 0
+};
+
 export function generateStaticParams() {
   return forms.map((form) => ({ formId: form.id }));
 }
@@ -30,9 +43,11 @@ export default async function FamilyPreviewFormPage({ params }: { params: Promis
         Preview mode for layout review only. No information is saved to a real family account.
       </section>
       <main className="family-portal">
-        <aside className="family-sidebar">
+        <div aria-hidden="true" style={watermarkStyle}>
+          <MarshallLogo />
+        </div>
+        <aside className="family-sidebar" style={{ position: "relative", zIndex: 1 }}>
           <section className="family-case-card">
-            <MarshallLogo className="family-brand-logo" />
             <span className="family-status-chip">Arrangements in progress</span>
             <h2>Name of Loved One</h2>
             <p>Primary contact: Next of Kin</p>
@@ -66,7 +81,7 @@ export default async function FamilyPreviewFormPage({ params }: { params: Promis
           </div>
         </aside>
 
-        <section className="family-content">
+        <section className="family-content" style={{ position: "relative", zIndex: 1 }}>
           <section className="family-form-panel" id={`form-${form.id}`}>
             <div className="family-panel-header">
               <div>
