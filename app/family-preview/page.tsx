@@ -31,8 +31,7 @@ const forms = [
       ["Informant", "Next of Kin"],
       ["Informant Relationship", ""],
       ["Informant Mailing Address", ""],
-      ["Number of Death Certificates Needed", ""],
-      ["Death Certificate Copy Fees", "First copy: $17.00. Additional copies: $8.00."],
+      ["Number of Death Certificates Needed (First copy: $17.00. Additional copies: $8.00.)", ""],
       ["Insurance Copy Note", "If insurance is being processed, Marshall Funeral Home can send one death certificate to the company, so the family may want to order one additional copy."]
     ]
   },
@@ -136,7 +135,6 @@ function isLongField(label: string, value: string) {
     "Marital Status",
     "Highest Level of Education",
     "Informant Mailing Address",
-    "Death Certificate Copy Fees",
     "Insurance Copy Note",
     "Viewing At Church",
     "Place of Funeral Service",
@@ -275,7 +273,7 @@ export default function FamilyPreviewPage() {
                   return (
                     <label className={`family-field ${longField ? "full" : ""}`} key={`${form.id}-${label}`}>
                       <span>{label}</span>
-                      {label === "Number of Death Certificates Needed" ? (
+                      {label.startsWith("Number of Death Certificates Needed") ? (
                         <select defaultValue="">
                           <option value="" disabled>Select number</option>
                           {deathCertificateCopyOptions.map((option) => (
