@@ -14,6 +14,8 @@ const watermarkStyle = {
   zIndex: 0
 };
 
+const completeStatuses = new Set<string>(["Reviewed"]);
+
 export default function FamilyPreviewPage() {
   return (
     <main>
@@ -97,13 +99,16 @@ export default function FamilyPreviewPage() {
 
           <section className="family-panel family-section-gap" id="pre-arrangement">
             <div className="family-task-list">
-              {forms.map((form) => (
-                <div className="family-task" key={form.id}>
-                  <span className={form.status === "Reviewed" ? "family-complete-indicator" : "family-complete-indicator pending"}>{form.status === "Reviewed" ? "OK" : "-"}</span>
-                  <div><strong>{form.title}</strong><div className="family-meta">{form.status}</div></div>
-                  <a className="family-ghost-button" href={`/family-preview/${form.id}`}>Open</a>
-                </div>
-              ))}
+              {forms.map((form) => {
+                const isComplete = completeStatuses.has(form.status);
+                return (
+                  <div className="family-task" key={form.id}>
+                    <span className={isComplete ? "family-complete-indicator" : "family-complete-indicator pending"}>{isComplete ? "OK" : "-"}</span>
+                    <div><strong>{form.title}</strong><div className="family-meta">{form.status}</div></div>
+                    <a className="family-ghost-button" href={`/family-preview/${form.id}`}>Open</a>
+                  </div>
+                );
+              })}
             </div>
           </section>
 
