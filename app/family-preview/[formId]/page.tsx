@@ -101,14 +101,14 @@ export default async function FamilyPreviewFormPage({ params }: { params: Promis
                     <span>{label}</span>
                     {label.startsWith("Number of Death Certificates Needed") ? (
                       <select defaultValue="">
-                        <option value="" disabled>Select number</option>
+                        <option value="" disabled>Choose number</option>
                         {deathCertificateCopyOptions.map((option) => (
                           <option value={option} key={option}>{option}</option>
                         ))}
                       </select>
                     ) : dropdownOptions ? (
                       <select defaultValue="">
-                        <option value="" disabled>Select option</option>
+                        <option value="" disabled>Choose one</option>
                         {dropdownOptions.map((option) => (
                           <option value={option} key={option}>{option}</option>
                         ))}
