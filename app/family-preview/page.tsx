@@ -18,11 +18,33 @@ const forms = [
     title: "Obituary Information",
     status: "Draft saved",
     fields: [
-      ["Opening life story", ""],
-      ["Survived by", ""],
-      ["Preceded in death by", ""],
-      ["Service wording", ""],
-      ["Publication notes", "Staff will review before publication"]
+      ["Name", "Name of Loved One"],
+      ["Age", ""],
+      ["Address", ""],
+      ["City", ""],
+      ["State", ""],
+      ["Zip Code", ""],
+      ["Date of Death", ""],
+      ["Place of Death", ""],
+      ["Viewing", ""],
+      ["Viewing Time", ""],
+      ["Viewing Place", ""],
+      ["Wake Service Date", ""],
+      ["Wake Service Time", ""],
+      ["Wake Service Place", ""],
+      ["Viewing At Church", ""],
+      ["Funeral Service Date", ""],
+      ["Funeral Service Time", ""],
+      ["Place of Funeral Service", ""],
+      ["Cemetery", ""],
+      ["Date of Birth", ""],
+      ["Place of Birth", ""],
+      ["Name of Parents", ""],
+      ["Organizations and Clubs", ""],
+      ["Preceded in Death by", ""],
+      ["Survivors", ""],
+      ["Contact Person Name", "Next of Kin"],
+      ["Phone", "601-442-6300"]
     ]
   },
   {
@@ -84,7 +106,16 @@ const deathCertificateStages = [
 ];
 
 function isLongField(label: string, value: string) {
-  return value.length > 58 || label.toLowerCase().includes("note") || label.includes("Acknowledgment");
+  const longLabels = [
+    "Viewing At Church",
+    "Place of Funeral Service",
+    "Name of Parents",
+    "Organizations and Clubs",
+    "Preceded in Death by",
+    "Survivors"
+  ];
+
+  return value.length > 58 || longLabels.includes(label) || label.toLowerCase().includes("note") || label.includes("Acknowledgment");
 }
 
 export default function FamilyPreviewPage() {
