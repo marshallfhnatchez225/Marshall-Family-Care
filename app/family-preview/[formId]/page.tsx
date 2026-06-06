@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { deathCertificateCopyOptions, forms, isLongField } from "../form-data";
+import { MarshallLogo } from "../marshall-logo";
 
 export function generateStaticParams() {
   return forms.map((form) => ({ formId: form.id }));
@@ -31,6 +32,7 @@ export default async function FamilyPreviewFormPage({ params }: { params: Promis
       <main className="family-portal">
         <aside className="family-sidebar">
           <section className="family-case-card">
+            <MarshallLogo className="family-brand-logo" />
             <span className="family-status-chip">Arrangements in progress</span>
             <h2>Name of Loved One</h2>
             <p>Primary contact: Next of Kin</p>
