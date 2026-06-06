@@ -81,17 +81,6 @@ export const forms = [
     ]
   },
   {
-    id: "family-info",
-    title: "General Family Information",
-    status: "Reviewed",
-    fields: [
-      ["Primary contact", "Next of Kin"],
-      ["Preferred phone", "601-442-6300"],
-      ["Email", ""],
-      ["Billing contact", ""]
-    ]
-  },
-  {
     id: "next-of-kin",
     title: "Next Of Kin Information",
     status: "Needs clarification",
