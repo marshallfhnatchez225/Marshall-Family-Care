@@ -1,4 +1,11 @@
-export const forms = [
+type PreviewForm = {
+  id: string;
+  title: string;
+  status: string;
+  fields: [string, string][];
+};
+
+export const forms: PreviewForm[] = [
   {
     id: "death-certificate",
     title: "Death Certificate Information",
@@ -103,7 +110,7 @@ export const forms = [
       ["Plot details", ""]
     ]
   }
-] as const;
+];
 
 export const deathCertificateCopyOptions = Array.from({ length: 20 }, (_, index) => String(index + 1));
 
