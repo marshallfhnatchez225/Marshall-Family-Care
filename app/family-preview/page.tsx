@@ -48,11 +48,11 @@ export default function FamilyPreviewPage() {
           </section>
 
           <nav className="family-sidebar-nav" aria-label="Family portal navigation">
-            <a className="family-nav-button active" href="#case-home">
+            <a className="family-nav-button" href="#case-home">
               <span className="family-nav-label"><span className="family-complete-indicator">OK</span><span>Case home</span></span>
               <span className="family-mini-chip">Overview</span>
             </a>
-            <a className="family-nav-button" href="#pre-arrangement">
+            <a className="family-nav-button active" href="#pre-arrangement">
               <span className="family-nav-label"><span className="family-complete-indicator pending">-</span><span>Pre-Arrangement</span></span>
               <span className="family-mini-chip">33%</span>
             </a>
@@ -72,29 +72,16 @@ export default function FamilyPreviewPage() {
         </aside>
 
         <section className="family-content" style={{ position: "relative", zIndex: 1 }}>
-          <section className="family-metric-grid" id="case-home" style={{ marginTop: 0 }}>
-            <div className="family-metric"><strong>33%</strong><span>Pre-arrangement complete</span></div>
-            <div className="family-metric"><strong>5</strong><span>Forms awaiting staff review</span></div>
-            <div className="family-metric"><strong>3</strong><span>Uploads received</span></div>
-            <div className="family-metric"><strong>1</strong><span>Open requests</span></div>
-          </section>
-
-          <section className="family-hero">
+          <section
+            className="family-panel"
+            id="case-home"
+            style={{ alignItems: "center", display: "flex", gap: 16, justifyContent: "space-between", marginTop: 0 }}
+          >
             <div>
               <span className="family-status-chip">Arrangements in progress</span>
-              <h1>Welcome, Next</h1>
-              <p>This preview is a stable layout review page. Staff can use it to review the family-side flow without signing in.</p>
-              <div className="family-row-actions">
-                <a className="family-primary-button" href="/family-preview/death-certificate">Continue forms</a>
-                <a className="family-ghost-button" href="#post-arrangement">Review selections</a>
-                <a className="family-ghost-button" href="#aftercare">Aftercare help</a>
-              </div>
+              <p className="family-helper-text" style={{ margin: "8px 0 0" }}>Next requested action: review the death certificate information.</p>
             </div>
-            <aside className="family-hero-panel">
-              <strong>Next requested action</strong>
-              <p>Review the death certificate information and next of kin details.</p>
-              <a className="family-primary-button" href="/family-preview/death-certificate">Open death certificate</a>
-            </aside>
+            <a className="family-primary-button" href="/family-preview/death-certificate">Open death certificate</a>
           </section>
 
           <section className="family-panel family-section-gap" id="pre-arrangement">
