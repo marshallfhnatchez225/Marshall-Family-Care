@@ -233,14 +233,14 @@ export default function FamilyPreviewPage() {
           </section>
 
           {forms.map((form) => (
-            <section className="family-form-panel family-section-gap" id={`form-${form.id}`} key={form.id}>
-              <div className="family-panel-header">
+            <details className="family-form-panel family-section-gap" id={`form-${form.id}`} key={form.id}>
+              <summary className="family-panel-header" style={{ cursor: "pointer", listStylePosition: "inside" }}>
                 <div>
                   <h2>{form.title}</h2>
-                  <p className="family-helper-text">Status: <strong>{form.status}</strong></p>
+                  <p className="family-helper-text">Status: <strong>{form.status}</strong> - click to open</p>
                 </div>
                 <span className="family-status-chip">{form.status}</span>
-              </div>
+              </summary>
 
               <div className="family-form-grid">
                 {form.fields.map(([label, value]) => {
@@ -267,27 +267,27 @@ export default function FamilyPreviewPage() {
                   <a className="family-primary-button" href="#post-arrangement">Next section</a>
                 </div>
               </div>
-            </section>
+            </details>
           ))}
 
           <section className="family-two-column family-section-gap" id="post-arrangement">
-            <div className="family-panel">
-              <h2>Post-Arrangement</h2>
+            <details className="family-panel">
+              <summary style={{ cursor: "pointer", listStylePosition: "inside" }}><h2 style={{ display: "inline" }}>Post-Arrangement</h2></summary>
               <div className="family-data-list">
                 <div className="family-data-row"><strong>Service</strong><span>To be added by staff</span></div>
                 <div className="family-data-row"><strong>Location</strong><span>To be added by staff</span></div>
                 <div className="family-data-row"><strong>Obituary</strong><span>Draft waiting on family confirmation</span></div>
                 <div className="family-data-row"><strong>Death certificate</strong><span>Filed with the state</span></div>
               </div>
-            </div>
-            <div className="family-panel" id="aftercare">
-              <h2>Aftercare</h2>
+            </details>
+            <details className="family-panel" id="aftercare">
+              <summary style={{ cursor: "pointer", listStylePosition: "inside" }}><h2 style={{ display: "inline" }}>Aftercare</h2></summary>
               <div className="family-resource-list">
                 <div className="family-resource-item"><strong>Death certificates</strong><span>Staff can update copy status here.</span></div>
                 <div className="family-resource-item"><strong>Holiday flowers</strong><span>Families can request future flower assistance.</span></div>
                 <div className="family-resource-item"><strong>Marker help</strong><span>Staff can help with headstone or marker requests.</span></div>
               </div>
-            </div>
+            </details>
           </section>
         </section>
       </main>
