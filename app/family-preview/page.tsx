@@ -128,6 +128,8 @@ const deathCertificateStages = [
   "Completed"
 ];
 
+const deathCertificateCopyOptions = Array.from({ length: 20 }, (_, index) => String(index + 1));
+
 function isLongField(label: string, value: string) {
   const longLabels = [
     "Social Security Number",
@@ -273,7 +275,14 @@ export default function FamilyPreviewPage() {
                   return (
                     <label className={`family-field ${longField ? "full" : ""}`} key={`${form.id}-${label}`}>
                       <span>{label}</span>
-                      {longField ? <textarea defaultValue={value} /> : <input defaultValue={value} />}
+                      {label === "Number of Death Certificates Needed" ? (
+                        <select defaultValue="">
+                          <option value="" disabled>Select number</option>
+                          {deathCertificateCopyOptions.map((option) => (
+                            <option value={option} key={option}>{option}</option>
+                          ))}
+                        </select>
+                      ) : longField ? <textarea defaultValue={value} /> : <input defaultValue={value} />}
                     </label>
                   );
                 })}
