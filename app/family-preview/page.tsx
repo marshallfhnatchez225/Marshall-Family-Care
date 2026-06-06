@@ -1,6 +1,23 @@
 import { forms } from "./form-data";
 import { MarshallLogo } from "./marshall-logo";
 
+const watermarkStyle = {
+  position: "fixed" as const,
+  right: "clamp(18px, 6vw, 88px)",
+  bottom: "clamp(24px, 8vh, 96px)",
+  width: "min(54vw, 620px)",
+  maxWidth: "620px",
+  opacity: 0.08,
+  pointerEvents: "none" as const,
+  zIndex: 0
+};
+
+const watermarkImageStyle = {
+  width: "100%",
+  height: "auto",
+  display: "block"
+};
+
 export default function FamilyPreviewPage() {
   return (
     <main>
@@ -18,9 +35,11 @@ export default function FamilyPreviewPage() {
         Preview mode for layout review only. No information is saved to a real family account.
       </section>
       <main className="family-portal">
+        <div aria-hidden="true" style={watermarkStyle}>
+          <MarshallLogo style={watermarkImageStyle} />
+        </div>
         <aside className="family-sidebar">
           <section className="family-case-card">
-            <MarshallLogo className="family-brand-logo" />
             <span className="family-status-chip">Arrangements in progress</span>
             <h2>Name of Loved One</h2>
             <p>Primary contact: Next of Kin</p>
@@ -54,7 +73,7 @@ export default function FamilyPreviewPage() {
           </div>
         </aside>
 
-        <section className="family-content">
+        <section className="family-content" style={{ position: "relative", zIndex: 1 }}>
           <section className="family-metric-grid" id="case-home" style={{ marginTop: 0 }}>
             <div className="family-metric"><strong>33%</strong><span>Pre-arrangement complete</span></div>
             <div className="family-metric"><strong>5</strong><span>Forms awaiting staff review</span></div>
