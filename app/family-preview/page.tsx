@@ -1,140 +1,4 @@
-const forms = [
-  {
-    id: "death-certificate",
-    title: "Death Certificate Information",
-    status: "Needs review",
-    fields: [
-      ["Name", "Name of Loved One"],
-      ["Age", ""],
-      ["Street Address", ""],
-      ["City", ""],
-      ["County", ""],
-      ["State", ""],
-      ["Zip", ""],
-      ["Within City Limits", "Yes or No"],
-      ["Date of Birth", ""],
-      ["Place of Birth", ""],
-      ["Social Security Number", "Collected securely by staff"],
-      ["Veteran", "Yes or No"],
-      ["Father's First Name", ""],
-      ["Father's Middle Name", ""],
-      ["Father's Last Name", ""],
-      ["Mother's First Name", ""],
-      ["Mother's Middle Name", ""],
-      ["Mother's Maiden Name", ""],
-      ["Marital Status", "Married / Married, but separated / Widowed / Divorced / Never Married"],
-      ["Surviving Spouse", ""],
-      ["Spouse Maiden Name", ""],
-      ["Highest Level of Education", "8th Grade or Less / 9th-12th no diploma / High School or GED / Some College, No Degree / Associate Degree / Bachelor's Degree / Master's Degree / Doctorate Degree / Unknown"],
-      ["Occupation (Longest Job Held)", ""],
-      ["Industry", ""],
-      ["Informant", "Next of Kin"],
-      ["Informant Relationship", ""],
-      ["Informant Mailing Address", ""],
-      ["Number of Death Certificates Needed (First copy: $17.00. Additional copies: $8.00.)", ""],
-      ["Insurance Copy Note", "If insurance is being processed, Marshall Funeral Home can send one death certificate to the company, so the family may want to order one additional copy."]
-    ]
-  },
-  {
-    id: "obituary",
-    title: "Obituary Information",
-    status: "Draft saved",
-    fields: [
-      ["Name", "Name of Loved One"],
-      ["Age", ""],
-      ["Address", ""],
-      ["City", ""],
-      ["State", ""],
-      ["Zip Code", ""],
-      ["Date of Death", ""],
-      ["Place of Death", ""],
-      ["Viewing", ""],
-      ["Viewing Time", ""],
-      ["Viewing Place", ""],
-      ["Wake Service Date", ""],
-      ["Wake Service Time", ""],
-      ["Wake Service Place", ""],
-      ["Viewing At Church", ""],
-      ["Funeral Service Date", ""],
-      ["Funeral Service Time", ""],
-      ["Place of Funeral Service", ""],
-      ["Cemetery", ""],
-      ["Date of Birth", ""],
-      ["Place of Birth", ""],
-      ["Name of Parents", ""],
-      ["Organizations and Clubs", ""],
-      ["Preceded in Death by", ""],
-      ["Survivors", ""],
-      ["Contact Person Name", "Next of Kin"],
-      ["Phone", "601-442-6300"]
-    ]
-  },
-  {
-    id: "embalming",
-    title: "Permission To Embalm",
-    status: "Not submitted",
-    fields: [
-      ["Authorizing person", "Next of Kin"],
-      ["Relationship", ""],
-      ["Phone", "601-442-6300"],
-      ["Acknowledgment", "Staff will review this authorization before relying on it."]
-    ]
-  },
-  {
-    id: "family-info",
-    title: "General Family Information",
-    status: "Reviewed",
-    fields: [
-      ["Primary contact", "Next of Kin"],
-      ["Preferred phone", "601-442-6300"],
-      ["Email", ""],
-      ["Billing contact", ""]
-    ]
-  },
-  {
-    id: "next-of-kin",
-    title: "Next Of Kin Information",
-    status: "Needs clarification",
-    fields: [
-      ["Primary next of kin", "Next of Kin"],
-      ["Additional next of kin", ""],
-      ["Relationship order notes", ""],
-      ["Dispute or concern", ""]
-    ]
-  },
-  {
-    id: "veteran-church-cemetery",
-    title: "Veteran, Church, Cemetery Details",
-    status: "Draft saved",
-    fields: [
-      ["Veteran status", ""],
-      ["Church", ""],
-      ["Clergy", ""],
-      ["Cemetery", ""],
-      ["Plot details", ""]
-    ]
-  }
-];
-
-const deathCertificateCopyOptions = Array.from({ length: 20 }, (_, index) => String(index + 1));
-
-function isLongField(label: string, value: string) {
-  const longLabels = [
-    "Social Security Number",
-    "Marital Status",
-    "Highest Level of Education",
-    "Informant Mailing Address",
-    "Insurance Copy Note",
-    "Viewing At Church",
-    "Place of Funeral Service",
-    "Name of Parents",
-    "Organizations and Clubs",
-    "Preceded in Death by",
-    "Survivors"
-  ];
-
-  return value.length > 58 || longLabels.includes(label) || label.toLowerCase().includes("note") || label.includes("Acknowledgment");
-}
+import { forms } from "./form-data";
 
 export default function FamilyPreviewPage() {
   return (
@@ -202,7 +66,7 @@ export default function FamilyPreviewPage() {
               <h1>Welcome, Next</h1>
               <p>This preview is a stable layout review page. Staff can use it to review the family-side flow without signing in.</p>
               <div className="family-row-actions">
-                <a className="family-primary-button" href="#form-death-certificate">Continue forms</a>
+                <a className="family-primary-button" href="/family-preview/death-certificate">Continue forms</a>
                 <a className="family-ghost-button" href="#post-arrangement">Review selections</a>
                 <a className="family-ghost-button" href="#aftercare">Aftercare help</a>
               </div>
@@ -210,65 +74,21 @@ export default function FamilyPreviewPage() {
             <aside className="family-hero-panel">
               <strong>Next requested action</strong>
               <p>Review the death certificate information and next of kin details.</p>
-              <a className="family-primary-button" href="#form-death-certificate">Open death certificate</a>
+              <a className="family-primary-button" href="/family-preview/death-certificate">Open death certificate</a>
             </aside>
           </section>
 
           <section className="family-panel family-section-gap" id="pre-arrangement">
-            <div className="family-panel-header">
-              <div>
-                <h2>Pre-Arrangement</h2>
-                <p className="family-helper-text">Complete the requested forms in manageable sections.</p>
-              </div>
-            </div>
             <div className="family-task-list">
               {forms.map((form) => (
                 <div className="family-task" key={form.id}>
                   <span className={form.status === "Reviewed" ? "family-complete-indicator" : "family-complete-indicator pending"}>{form.status === "Reviewed" ? "OK" : "-"}</span>
                   <div><strong>{form.title}</strong><div className="family-meta">{form.status}</div></div>
-                  <a className="family-ghost-button" href={`#form-${form.id}`}>Open</a>
+                  <a className="family-ghost-button" href={`/family-preview/${form.id}`}>Open</a>
                 </div>
               ))}
             </div>
           </section>
-
-          {forms.map((form) => (
-            <details className="family-form-panel family-section-gap" id={`form-${form.id}`} key={form.id}>
-              <summary className="family-panel-header" style={{ cursor: "pointer", listStylePosition: "inside" }}>
-                <div>
-                  <h2>{form.title}</h2>
-                  <p className="family-helper-text">Status: <strong>{form.status}</strong> - click to open</p>
-                </div>
-                <span className="family-status-chip">{form.status}</span>
-              </summary>
-
-              <div className="family-form-grid">
-                {form.fields.map(([label, value]) => {
-                  const longField = isLongField(label, value);
-                  return (
-                    <label className={`family-field ${longField ? "full" : ""}`} key={`${form.id}-${label}`}>
-                      <span>{label}</span>
-                      {label.startsWith("Number of Death Certificates Needed") ? (
-                        <select defaultValue="">
-                          <option value="" disabled>Select number</option>
-                          {deathCertificateCopyOptions.map((option) => (
-                            <option value={option} key={option}>{option}</option>
-                          ))}
-                        </select>
-                      ) : longField ? <textarea defaultValue={value} /> : <input defaultValue={value} />}
-                    </label>
-                  );
-                })}
-              </div>
-              <div className="family-form-actions">
-                <p className="family-helper-text">Preview only. Changes are not saved.</p>
-                <div className="family-row-actions">
-                  <a className="family-ghost-button" href="#pre-arrangement">Back to list</a>
-                  <a className="family-primary-button" href="#post-arrangement">Next section</a>
-                </div>
-              </div>
-            </details>
-          ))}
 
           <section className="family-two-column family-section-gap" id="post-arrangement">
             <details className="family-panel">
