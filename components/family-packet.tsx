@@ -38,9 +38,25 @@ function FieldInput({ field, value }: { field: Field; value?: string }) {
   if (field.type === "select") return <select {...common}><option value="">Select</option>{field.options?.map((option) => <option key={option}>{option}</option>)}</select>;
   return <input {...common} type={field.type || "text"} />;
 }
+
+function MarshallWreathMark() {
+  return <div aria-label="Marshall Funeral Home M with gold wreath" className="relative grid size-24 shrink-0 place-items-center text-[#f2d486] drop-shadow-md" role="img">
+    <svg aria-hidden="true" className="absolute inset-0 size-full" viewBox="0 0 100 100" fill="none">
+      <g stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+        <path d="M47 89C24 77 17 55 23 29" />
+        <path d="M53 89C76 77 83 55 77 29" />
+      </g>
+      <g fill="currentColor">
+        <ellipse cx="25" cy="33" rx="4" ry="8" transform="rotate(-45 25 33)" /><ellipse cx="20" cy="43" rx="4" ry="8" transform="rotate(-62 20 43)" /><ellipse cx="20" cy="54" rx="4" ry="8" transform="rotate(-78 20 54)" /><ellipse cx="24" cy="65" rx="4" ry="8" transform="rotate(-103 24 65)" /><ellipse cx="31" cy="75" rx="4" ry="8" transform="rotate(-123 31 75)" />
+        <ellipse cx="75" cy="33" rx="4" ry="8" transform="rotate(45 75 33)" /><ellipse cx="80" cy="43" rx="4" ry="8" transform="rotate(62 80 43)" /><ellipse cx="80" cy="54" rx="4" ry="8" transform="rotate(78 80 54)" /><ellipse cx="76" cy="65" rx="4" ry="8" transform="rotate(103 76 65)" /><ellipse cx="69" cy="75" rx="4" ry="8" transform="rotate(123 69 75)" />
+      </g>
+    </svg>
+    <span className="relative mt-1 font-serif text-6xl font-bold leading-none sm:text-7xl">M</span>
+  </div>;
+}
 export function FamilyPacket({ item, token, active, typedSignatureEnabled }: { item: FamilyCase; token: string; active: SectionKey; typedSignatureEnabled: boolean }) {
   const section = item.sections[active];
-  return <main className="min-h-screen bg-[#faf7f1] text-slate-900"><header className="border-b-4 border-[#c6a15b] bg-[#6e172c] px-5 py-6 text-white shadow-sm"><div className="mx-auto flex max-w-4xl items-center justify-between gap-5"><div>{item.isDemo && <p className="mb-3 inline-block rounded-full bg-[#f5e6bb] px-3 py-1 text-xs font-bold text-[#561324]">DEMO · FICTIONAL SAMPLE · NO EMAIL SENT</p>}<p className="text-xs font-semibold uppercase tracking-[.28em] text-[#f2d486]">Marshall Funeral Home</p><h1 className="mt-2 text-3xl font-semibold">Family Care Packet</h1><p className="mt-2 text-sm text-[#fdf6e7]">Private case for {item.decedentName} · Link expires {new Date(item.access.expiresAt).toLocaleDateString()}</p></div><span aria-label="Marshall Funeral Home M mark" className="grid size-20 shrink-0 place-items-center border-2 border-[#f2d486] font-serif text-6xl font-bold leading-none text-[#f2d486] drop-shadow-md sm:size-24 sm:text-7xl">M</span></div></header>
+  return <main className="min-h-screen bg-[#faf7f1] text-slate-900"><header className="border-b-4 border-[#c6a15b] bg-[#6e172c] px-5 py-6 text-white shadow-sm"><div className="mx-auto flex max-w-4xl items-center justify-between gap-5"><div>{item.isDemo && <p className="mb-3 inline-block rounded-full bg-[#f5e6bb] px-3 py-1 text-xs font-bold text-[#561324]">DEMO · FICTIONAL SAMPLE · NO EMAIL SENT</p>}<p className="text-xs font-semibold uppercase tracking-[.28em] text-[#f2d486]">Marshall Funeral Home</p><h1 className="mt-2 text-3xl font-semibold">Family Care Packet</h1><p className="mt-2 text-sm text-[#fdf6e7]">Private case for {item.decedentName} · Link expires {new Date(item.access.expiresAt).toLocaleDateString()}</p></div><MarshallWreathMark /></div></header>
     <div className="mx-auto max-w-4xl px-4 py-6"><nav aria-label="Packet sections" className="grid grid-cols-2 gap-2 md:grid-cols-4">{(Object.keys(labels) as SectionKey[]).map((key) => <a href={`/family/${token}?section=${key}`} key={key} className={`rounded-xl border px-3 py-3 text-center text-xs font-semibold transition-colors ${key === active ? "border-[#6e172c] bg-[#6e172c] text-white" : "border-[#dccda8] bg-white text-black hover:border-[#c6a15b]"}`}>{labels[key]}<span className={`mt-1 block font-normal capitalize ${key === active ? "text-white" : "text-black"}`}>{item.sections[key].status.replace("-", " ")}</span></a>)}</nav>
       <section className="mt-6 rounded-3xl border border-[#e4d7b7] bg-white p-5 shadow-sm md:p-8"><p className="text-xs font-semibold uppercase tracking-[.24em] text-[#7b1e32]">Section</p><h2 className="mt-2 text-3xl font-semibold text-[#3f1420]">{labels[active]}</h2><p className="mt-2 text-sm text-slate-600">Save anytime and return with this same private link. Submit when this section is ready for Marshall staff review.</p>
         {active === "deathCertificate" && <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm leading-6"><strong>First Copy: $17.00 · Additional Copies: $8.00 each</strong><br />INSURANCE NOTICE: If you have insurance for us to process, we will send one to the company for you, so you may want to order one additional copy.</div>}
