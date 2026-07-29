@@ -65,6 +65,11 @@ export async function attachPacketToCase(id: string, targetCaseId: string | unde
   packet.timeline.unshift(event(actor, "case", targetCaseId ? `Attached packet to Family Care case ${targetCaseId}.` : "Created Family Care case from submitted packet without re-entering answers."));
   await writeCases(cases); return packet;
 }
+export async function saveArrangementSheet(id: string, data: Record<string, string>, actor: string) {
+  const cases = await readCases(); const item = cases.find((entry) => entry.id === id); if (!item) throw new Error("Family packet not found.");
+  item.arrangementSheet = data; item.arrangementUpdatedAt = new Date().toISOString();
+  item.timeline.unshift(event(actor, "save", "Saved the staff Arrangement Sheet.")); await writeCases(cases); return item;
+}
 export async function updateCaseReview(id: string, section: SectionKey, status: SectionStatus, actor: string) {
   const cases = await readCases(); const item = cases.find((entry) => entry.id === id); if (!item) throw new Error("Case not found.");
   item.sections[section].status = status; item.sections[section].updatedAt = new Date().toISOString(); item.timeline.unshift(event(actor, "review", `Marked ${section} ${status}.`)); await writeCases(cases);

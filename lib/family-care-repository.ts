@@ -16,6 +16,7 @@ export async function revokeCaseLink(id: string, actor: string) { return (await 
 export async function updateCaseStatus(id: string, status: CaseStatus, actor: string) { return (await repository()).updateCaseStatus(id, status, actor); }
 export async function savePhoto(token: string, file: File) { return (await repository()).savePhoto(token, file); }
 export async function attachPacketToCase(id: string, targetCaseId: string | undefined, actor: string) { return (await repository()).attachPacketToCase(id, targetCaseId, actor); }
+export async function saveArrangementSheet(id: string, data: Record<string, string>, actor: string) { return (await repository()).saveArrangementSheet(id, data, actor); }
 export async function resetLocalDemo(actor: string) {
   if (getRuntimeMode() !== "local-demo") throw new Error("Local demo mode is not enabled.");
   return (await import("./family-care-local-repository")).resetLocalDemo(actor);

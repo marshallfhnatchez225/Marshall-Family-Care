@@ -7,7 +7,7 @@ import type { CaseStatus, FamilyCase, SectionKey, SectionStatus, TimelineEvent }
 type CaseRow = {
   id: string; decedent_name: string; family_email: string; owner_name: string; next_promised_update: string;
   family_mobile?: string; sms_consent_at?: string; delivery_state?: FamilyCase["deliveryState"]; delivery_error?: string;
-  created_at: string; status: CaseStatus; packet_state?: FamilyCase["packetState"]; packet_submitted_at?: string; attached_case_id?: string; packet_sections?: SectionRow[]; family_access_links?: LinkRow[];
+  created_at: string; status: CaseStatus; packet_state?: FamilyCase["packetState"]; packet_submitted_at?: string; attached_case_id?: string; arrangement_sheet?: Record<string, string>; arrangement_updated_at?: string; packet_sections?: SectionRow[]; family_access_links?: LinkRow[];
   audit_events?: AuditRow[]; uploaded_assets?: AssetRow[];
 };
 type SectionRow = { section_key: SectionKey; review_status: SectionStatus; responses: Record<string, string>; updated_at: string };
@@ -27,7 +27,7 @@ function mapCase(row: CaseRow): FamilyCase {
     id: row.id, decedentName: row.decedent_name, familyEmail: row.family_email || "", familyMobile: row.family_mobile, smsConsentAt: row.sms_consent_at,
     deliveryState: row.delivery_state, deliveryError: row.delivery_error, owner: row.owner_name,
     nextPromisedUpdate: row.next_promised_update, createdAt: row.created_at, caseStatus: row.status, sections,
-    packetState: row.packet_state, packetSubmittedAt: row.packet_submitted_at, attachedCaseId: row.attached_case_id,
+    packetState: row.packet_state, packetSubmittedAt: row.packet_submitted_at, attachedCaseId: row.attached_case_id, arrangementSheet: row.arrangement_sheet || {}, arrangementUpdatedAt: row.arrangement_updated_at,
     access: { tokenHash: link?.token_hash || "", expiresAt: link?.expires_at || row.created_at, revokedAt: link?.revoked_at, lastOpenedAt: link?.last_opened_at },
     photo: asset ? { originalName: asset.original_name, storedName: asset.object_path, size: asset.byte_size, type: asset.mime_type } : undefined,
     timeline: (row.audit_events || []).map((entry) => ({ id: entry.id, at: entry.created_at, actor: entry.actor_label, type: entry.event_type, detail: entry.detail })),
@@ -42,7 +42,7 @@ async function staffClient() {
   return { client, user };
 }
 
-const caseSelect = "id,decedent_name,family_email,family_mobile,sms_consent_at,delivery_state,delivery_error,owner_name,next_promised_update,created_at,status,packet_state,packet_submitted_at,attached_case_id,packet_sections(section_key,review_status,responses,updated_at),family_access_links(token_hash,expires_at,revoked_at,last_opened_at),audit_events(id,created_at,actor_label,event_type,detail),uploaded_assets(original_name,object_path,byte_size,mime_type)";
+const caseSelect = "id,decedent_name,family_email,family_mobile,sms_consent_at,delivery_state,delivery_error,owner_name,next_promised_update,created_at,status,packet_state,packet_submitted_at,attached_case_id,arrangement_sheet,arrangement_updated_at,packet_sections(section_key,review_status,responses,updated_at),family_access_links(token_hash,expires_at,revoked_at,last_opened_at),audit_events(id,created_at,actor_label,event_type,detail),uploaded_assets(original_name,object_path,byte_size,mime_type)";
 
 export async function listFamilyCases() {
   const { client } = await staffClient();
@@ -119,6 +119,14 @@ export async function attachPacketToCase(id: string, targetCaseId: string | unde
   const { error: updateError } = await client.from("family_cases").update({ decedent_name: decedentName, packet_state: "attached", attached_case_id: attachedCaseId }).eq("id", id); if (updateError) throw updateError;
   await client.from("audit_events").insert({ case_id: id, actor_user_id: user.id, actor_label: actor, event_type: "case", detail: targetCaseId ? `Attached packet to Family Care case ${targetCaseId}.` : "Created Family Care case from submitted packet without re-entering answers." });
   return { ...packet, decedentName, packetState: "attached" as const, attachedCaseId };
+}
+
+export async function saveArrangementSheet(id: string, data: Record<string, string>, actor: string) {
+  const { client, user } = await staffClient();
+  const updatedAt = new Date().toISOString();
+  const { error } = await client.from("family_cases").update({ arrangement_sheet: data, arrangement_updated_at: updatedAt }).eq("id", id);
+  if (error) throw error;
+  await client.from("audit_events").insert({ case_id: id, actor_user_id: user.id, actor_label: actor, event_type: "save", detail: "Saved the staff Arrangement Sheet." });
 }
 
 export async function updateCaseReview(id: string, section: SectionKey, status: SectionStatus, actor: string) {

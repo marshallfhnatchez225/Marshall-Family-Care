@@ -11,6 +11,8 @@ export type FamilyCase = {
   packetState?: "sent" | "submitted" | "attached";
   packetSubmittedAt?: string;
   attachedCaseId?: string;
+  arrangementSheet?: Record<string, string>;
+  arrangementUpdatedAt?: string;
   caseStatus?: CaseStatus;
   isDemo?: boolean;
   demoAccessToken?: string;

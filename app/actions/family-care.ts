@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
-import { attachPacketToCase, createFamilyCase, createPacketInvitation, resetLocalDemo, revokeCaseLink, savePhoto, updateCaseReview, updateCaseStatus, updateSection } from "@/lib/family-care-repository";
+import { attachPacketToCase, createFamilyCase, createPacketInvitation, resetLocalDemo, revokeCaseLink, saveArrangementSheet, savePhoto, updateCaseReview, updateCaseStatus, updateSection } from "@/lib/family-care-repository";
 import type { CaseStatus, SectionKey, SectionStatus } from "@/lib/family-care-types";
 import { createHash } from "node:crypto";
 
@@ -36,6 +36,15 @@ export async function attachPacketAction(formData: FormData) {
   const session = await getCurrentSession(); if (!session) redirect("/login");
   await attachPacketToCase(String(formData.get("packetId")), String(formData.get("targetCaseId") || "") || undefined, session.name);
   redirect(`/dashboard/family-care?selected=${String(formData.get("packetId"))}&attached=1`);
+}
+export async function saveArrangementSheetAction(formData: FormData) {
+  const session = await getCurrentSession(); if (!session) redirect("/login");
+  const data: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) if (key !== "packetId" && typeof value === "string") data[key] = value.trim();
+  const packetId = String(formData.get("packetId") || "");
+  if (!packetId) throw new Error("Arrangement Sheet is missing its family packet.");
+  await saveArrangementSheet(packetId, data, session.name);
+  redirect(`/dashboard/family-care?selected=${encodeURIComponent(packetId)}&arrangement=saved`);
 }
 export async function reviewSectionAction(formData: FormData) {
   const session = await getCurrentSession(); if (!session) redirect("/login");
