@@ -5,7 +5,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 async function getOrigin() {
-  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  // Family Care deployments use the dedicated application URL. Keep the
+  // legacy site URL as a fallback for older deployments during migration.
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL;
   if (configuredUrl) {
     return configuredUrl;
   }
