@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #04131b;
-  --foreground: #e9f7fb;
-  --card: rgba(7, 31, 43, 0.82);
-  --card-border: rgba(122, 211, 255, 0.16);
-  --muted: #94b8c8;
-  --accent: #83e3ff;
-  --accent-strong: #2bc1ff;
+  --background: #260914;
+  --foreground: #fffaf0;
+  --card: rgba(68, 13, 30, 0.88);
+  --card-border: rgba(198, 161, 91, 0.28);
+  --muted: #d5bea0;
+  --accent: #f2d486;
+  --accent-strong: #c6a15b;
   --danger: #ff7c7c;
   --success: #6ef0b5;
   --shadow: 0 28px 90px rgba(2, 12, 18, 0.4);
@@ -20,9 +20,9 @@
 html {
   min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(35, 147, 184, 0.32), transparent 28%),
-    radial-gradient(circle at 85% 15%, rgba(98, 255, 204, 0.18), transparent 24%),
-    linear-gradient(180deg, #05131b 0%, #071d28 45%, #04131b 100%);
+    radial-gradient(circle at top left, rgba(126, 25, 53, 0.58), transparent 32%),
+    radial-gradient(circle at 85% 15%, rgba(198, 161, 91, 0.18), transparent 24%),
+    linear-gradient(180deg, #260914 0%, #491022 45%, #260914 100%);
 }
 
 body {
@@ -46,7 +46,7 @@ textarea {
 }
 
 ::selection {
-  background: rgba(131, 227, 255, 0.24);
+  background: rgba(242, 212, 134, 0.3);
 }
 
 .glass-card {
@@ -58,7 +58,7 @@ textarea {
 
 .grid-bg {
   background-image:
-    linear-gradient(rgba(131, 227, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(131, 227, 255, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(242, 212, 134, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242, 212, 134, 0.1) 1px, transparent 1px);
   background-size: 32px 32px;
 }
