@@ -8,39 +8,6 @@ const sectionLabels: Record<SectionKey, string> = {
   embalming: "Permission to Embalm",
 };
 
-function valueOrMissing(value?: string) {
-  return value?.trim()
-    ? <span className="text-white">{value}</span>
-    : <span className="rounded-md bg-amber-200/15 px-2 py-1 font-semibold text-amber-200">Missing — follow up</span>;
-}
-
-function ServiceSummary({ packet }: { packet: FamilyCase }) {
-  const general = packet.sections.general.data;
-  const obituary = packet.sections.obituary.data;
-  const rows = [
-    ["Decedent", general.fullName || obituary.name],
-    ["Family contact", general.informantName || obituary.contactName],
-    ["Family phone", general.informantTelephone || obituary.contactPhone],
-    ["Service date", general.funeralDate || obituary.serviceDate],
-    ["Service time", general.funeralTime || obituary.serviceTime],
-    ["Service location", general.funeralPlace || obituary.servicePlace],
-    ["Officiant / pastor", general.officiant],
-    ["Cemetery", general.cemeteryName || obituary.cemetery],
-    ["Minister notified", general.ministerNotified],
-    ["Viewing date", obituary.viewingDate],
-    ["Viewing time", obituary.viewingTime],
-    ["Viewing location", obituary.viewingPlace],
-  ];
-  const missing = rows.filter(([, value]) => !value?.trim()).length;
-  return <section className="rounded-3xl border border-[#c6a15b]/35 bg-[#c6a15b]/10 p-5">
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div><p className="text-xs font-semibold uppercase tracking-[.24em] text-[#f2d486]">Staff only</p><h3 className="mt-2 text-2xl font-semibold">Service Summary</h3></div>
-      <p className={`rounded-full px-3 py-2 text-xs font-semibold ${missing ? "bg-amber-200/15 text-amber-100" : "bg-emerald-200/15 text-emerald-100"}`}>{missing ? `${missing} item${missing === 1 ? "" : "s"} need follow-up` : "Ready for service coordination"}</p>
-    </div>
-    <dl className="mt-5 grid gap-3 md:grid-cols-2">{rows.map(([label, value]) => <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/30 p-4"><dt className="text-xs uppercase tracking-[.16em] text-slate-400">{label}</dt><dd className="mt-2 text-sm">{valueOrMissing(value)}</dd></div>)}</dl>
-    <p className="mt-4 rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">Staff follow-up: Social Security number is not collected in this family packet. Obtain it only through Marshall’s approved internal process if required for the death certificate.</p>
-  </section>;
-}
 
 type ArrangementField = { name: string; label: string; auto?: string };
 function arrangementAnswer(packet: FamilyCase, source?: string) {
@@ -87,11 +54,11 @@ export function FamilyCareDashboard({ cases, issued, demoEnabled, selectedId }: 
         <section className="rounded-3xl border border-white/10 bg-slate-950/35 p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-semibold uppercase tracking-[.22em] text-[#f2d486]">Review submission</p><h2 className="mt-2 text-2xl font-semibold">{selected.sections.general.data.fullName || selected.sections.obituary.data.name || "Submitted family packet"}</h2><p className="mt-1 text-sm text-slate-400">{selected.familyEmail} · Submitted {selected.packetSubmittedAt ? new Date(selected.packetSubmittedAt).toLocaleString() : "section activity received"}</p></div>{selected.packetState === "attached" && <span className="rounded-full bg-emerald-200/15 px-3 py-2 text-xs font-semibold text-emerald-100">Family Care case attached</span>}</div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">{(Object.keys(sectionLabels) as SectionKey[]).map((key) => <details key={key} className="rounded-2xl border border-white/10 bg-white/5 p-4"><summary className="cursor-pointer text-sm font-semibold">{sectionLabels[key]} <span className="ml-2 text-xs uppercase text-[#f2d486]">{selected.sections[key].status.replace("-", " ")}</span></summary><dl className="mt-4 space-y-2">{Object.entries(selected.sections[key].data).slice(0, 12).map(([field, value]) => <div key={field} className="grid grid-cols-[130px_1fr] gap-3 text-xs"><dt className="text-slate-500">{field}</dt><dd className="break-words text-slate-200">{value || "—"}</dd></div>)}</dl><form action={reviewSectionAction} className="mt-4 flex gap-2"><input type="hidden" name="caseId" value={selected.id} /><input type="hidden" name="section" value={key} /><select aria-label={`${sectionLabels[key]} review state`} name="status" defaultValue={selected.sections[key].status} className="flex-1 rounded-lg bg-slate-900 px-3 py-2 text-xs"><option value="incomplete">Incomplete</option><option value="submitted">Submitted</option><option value="needs-follow-up">Needs follow-up</option><option value="approved">Approved</option></select><button className="rounded-lg border border-white/15 px-3 text-xs">Update</button></form></details>)}</div>
         </section>
-        <ServiceSummary packet={selected} />
         <ArrangementSheet packet={selected} />
         <section className="rounded-3xl border border-violet-300/20 bg-violet-300/5 p-5"><p className="text-xs font-semibold uppercase tracking-[.22em] text-violet-200">4 · Create or attach case</p><h3 className="mt-2 text-xl font-semibold">Use these answers without re-entry</h3><p className="mt-2 text-sm text-slate-300">Create the Family Care case from this packet, or attach the structured answers to an existing case.</p><div className="mt-4 grid gap-4 md:grid-cols-2"><form action={attachPacketAction} className="rounded-2xl border border-white/10 p-4"><input type="hidden" name="packetId" value={selected.id} /><p className="text-sm font-semibold">Create new case from packet</p><p className="mt-2 text-xs text-slate-400">Decedent, contact, service, cemetery, viewing, and all four form responses carry forward.</p><button className="mt-4 rounded-full bg-violet-200 px-4 py-2 text-sm font-semibold text-violet-950">Create Family Care case</button></form><form action={attachPacketAction} className="rounded-2xl border border-white/10 p-4"><input type="hidden" name="packetId" value={selected.id} /><label className="text-sm font-semibold">Attach to existing case<select name="targetCaseId" required className="mt-3 w-full rounded-xl bg-slate-900 px-3 py-3 text-sm"><option value="">Select a case</option>{attachedCases.filter((item) => item.id !== selected.id).map((item) => <option key={item.id} value={item.id}>{item.decedentName}</option>)}</select></label><button className="mt-4 rounded-full border border-violet-200/40 px-4 py-2 text-sm font-semibold text-violet-100">Attach packet</button></form></div></section>
-      </> : <section className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-slate-400">Select a submitted packet to review its answers and Service Summary.</section>}</div>
+      </> : <section className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-slate-400">Select a submitted packet to review its answers and Arrangement Sheet.</section>}</div>
     </section>
   </div>;
 }
+
 
