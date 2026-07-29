@@ -1,0 +1,21 @@
+export type SectionKey = "general" | "obituary" | "deathCertificate" | "embalming";
+export type SectionStatus = "incomplete" | "submitted" | "needs-follow-up" | "approved";
+export type CaseStatus = "active" | "aftercare-ready" | "complete";
+export type TimelineEvent = { id: string; at: string; actor: string; type: "case" | "access" | "save" | "submission" | "review" | "communication" | "handoff"; detail: string };
+export type FamilyCase = {
+  id: string; decedentName: string; familyEmail: string; owner: string; nextPromisedUpdate: string; createdAt: string;
+  familyMobile?: string;
+  smsConsentAt?: string;
+  deliveryState?: "queued-ready" | "sent" | "failed";
+  deliveryError?: string;
+  packetState?: "sent" | "submitted" | "attached";
+  packetSubmittedAt?: string;
+  attachedCaseId?: string;
+  caseStatus?: CaseStatus;
+  isDemo?: boolean;
+  demoAccessToken?: string;
+  access: { tokenHash: string; expiresAt: string; revokedAt?: string; lastOpenedAt?: string };
+  sections: Record<SectionKey, { status: SectionStatus; updatedAt?: string; data: Record<string, string> }>;
+  photo?: { originalName: string; storedName: string; size: number; type: string };
+  timeline: TimelineEvent[];
+};

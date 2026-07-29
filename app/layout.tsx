@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Marshall Family Care Portal",
-  description: "Care coordination portal for Marshall Family Care."
+  title: "Marshall Family Care",
+  description: "Private family intake and care coordination for Marshall Funeral Home.",
 };
 
 export default function RootLayout({
-  children
+  children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
