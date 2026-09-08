@@ -1,0 +1,1 @@
+import Link from"next/link";export default function NotFound(){return <main className="empty" style={{minHeight:'100vh'}}><div><h1>Module not found</h1><p>That area is not part of Marshall OS.</p><Link className="primary" href="/">Return home</Link></div></main>}
