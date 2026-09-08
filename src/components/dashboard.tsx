@@ -1,30 +1,33 @@
 import Link from "next/link";
-import { AlertCircle, ArrowRight, CalendarDays, CheckCircle2, FileCheck2, FolderKanban, ListChecks, Megaphone, Plus, Users } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Check, ChevronRight, Circle, Clock3, FileCheck2, FolderKanban, HeartHandshake, ListChecks, Megaphone, Plus, Sparkles, Users } from "lucide-react";
 import { AppShell } from "./app-shell";
 
-const metrics = [
-  { label: "Active cases", value: "12", detail: "4 services this week", icon: FolderKanban, tone: "wine" },
-  { label: "Due today", value: "7", detail: "3 require attention", icon: ListChecks, tone: "amber" },
-  { label: "Family packets", value: "5", detail: "2 awaiting review", icon: Users, tone: "blue" },
-  { label: "Content drafts", value: "3", detail: "1 ready to approve", icon: Megaphone, tone: "green" },
+const pulse = [
+  { label: "Active cases", value: "12", delta: "+2 this week", icon: FolderKanban, tone: "wine" },
+  { label: "Due today", value: "7", delta: "3 high priority", icon: ListChecks, tone: "amber" },
+  { label: "Family approvals", value: "5", delta: "2 new today", icon: Users, tone: "blue" },
 ];
-const actions = [
-  { icon: AlertCircle, title: "Three family updates are due", detail: "Oldest promised update is overdue", tag: "Urgent" },
-  { icon: FileCheck2, title: "Two packets need staff review", detail: "Submitted by families this morning", tag: "Review" },
-  { icon: Megaphone, title: "One obituary draft is ready", detail: "Human approval is required before publishing", tag: "Approve" },
+const activity = [
+  { title: "Obituary approved", detail: "Green family · Content workflow started", time: "Now", tone: "done" },
+  { title: "Certificates ready", detail: "Williams family · Six certified copies", time: "8m", tone: "ready" },
+  { title: "Service schedule updated", detail: "Davis service · Calendar synchronized", time: "16m", tone: "info" },
+  { title: "Family portal opened", detail: "Thompson family · Primary contact joined", time: "1h", tone: "info" },
 ];
-const events = [
-  ["CASE.OBITUARY_APPROVED", "Green family obituary", "Content workflow"],
-  ["DEATH_CERTIFICATES.READY", "Williams family · 6 copies", "Family notification"],
-  ["SERVICE.SCHEDULE_CHANGED", "Davis service · Sep 12", "Calendar sync"],
+const flow = [
+  { label: "First call", value: 2, width: "28%" }, { label: "Arrangements", value: 4, width: "54%" },
+  { label: "Service ready", value: 3, width: "42%" }, { label: "Aftercare", value: 3, width: "42%" },
 ];
 
 export function Dashboard() {
-  return <AppShell><div className="content dashboard">
-    <section className="intro"><div><p className="eyebrow">Command center · Tuesday, September 8</p><h1>Good afternoon, Jonte.</h1><p>Here’s what deserves your attention across Marshall today.</p></div><Link className="primary" href="/cases"><Plus size={17}/> Add new case</Link></section>
-    <section className="metrics">{metrics.map(({ icon: Icon, ...metric }) => <article className="card metric" key={metric.label}><div className={`metricicon ${metric.tone}`}><Icon size={19}/></div><div><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.detail}</small></div></article>)}</section>
-    <div className="grid"><section className="panel"><div className="panelhead"><div><p className="eyebrow">Action center</p><h2>Needs attention</h2></div><Link className="link" href="/tasks">View all <ArrowRight size={14}/></Link></div><div className="attention">{actions.map(({ icon: Icon, ...item }) => <article key={item.title}><span className="iconbox"><Icon size={18}/></span><div><h3>{item.title}</h3><p>{item.detail}</p></div><span className="badge">{item.tag}</span><ArrowRight className="rowarrow" size={16}/></article>)}</div></section>
-    <aside className="panel briefing"><div className="briefingtop"><span className="briefingicon"><CalendarDays size={18}/></span><span className="badge inverse">Daily briefing</span></div><h2>Three things to know</h2><ul><li><span>01</span><p><b>Saturday staffing</b>One service still needs a second attendant.</p></li><li><span>02</span><p><b>Family care</b>Certificates are ready for the Williams family.</p></li><li><span>03</span><p><b>Content</b>The Green obituary is approved for review.</p></li></ul></aside></div>
-    <section className="panel events"><div className="panelhead"><div><p className="eyebrow">Automation</p><h2>Recent workflow activity</h2></div><span className="badge green"><span className="livepulse"/> Event engine live</span></div>{events.map((event, index) => <div className="eventrow" key={event[0]}><span className="eventstatus"><CheckCircle2 size={17}/></span><b className="eventcode">{event[0]}</b><strong>{event[1]}</strong><span>{event[2]}</span><time>{index === 0 ? "Just now" : `${index * 8}m ago`}</time></div>)}</section>
+  return <AppShell><div className="content commandcenter">
+    <section className="commandhero"><div><div className="herokicker"><span className="livepulse"/> Live command center</div><h1>Good afternoon, Jonte.</h1><p>Tuesday, September 8 · Marshall Funeral Home</p></div><div className="heroactions"><button className="quietbutton"><Sparkles size={16}/> Ask Marshall OS</button><Link className="primary" href="/cases"><Plus size={17}/> New case</Link></div></section>
+    <section className="commandgrid">
+      <article className="commandbrief"><div className="briefglow"/><div className="commandbriefhead"><span><Sparkles size={15}/> Executive briefing</span><small>Updated just now</small></div><h2>Three things need your attention.</h2><p className="brieflead">Saturday’s service needs another attendant, two family packets await review, and an approved obituary is ready for publishing.</p><div className="briefactions"><Link href="/tasks">Review priorities <ArrowUpRight size={14}/></Link><span>Generated from live operations</span></div></article>
+      <article className="todaycard card"><div className="todaydate"><small>SEP</small><strong>08</strong></div><div><p className="eyebrow">Today</p><h3>2 services · 4 family updates</h3><p>Your next scheduled service begins at 11:00 AM.</p></div><Link href="/services" aria-label="Open services"><ChevronRight size={18}/></Link></article>
+      <section className="pulsepanel panel"><div className="sectiontitle"><div><p className="eyebrow">Operations pulse</p><h2>What’s moving today</h2></div><Link className="link" href="/analytics">Full analytics <ArrowUpRight size={13}/></Link></div><div className="pulsecards">{pulse.map(({icon:Icon,...item})=><article key={item.label}><span className={`metricicon ${item.tone}`}><Icon size={18}/></span><div><small>{item.label}</small><strong>{item.value}</strong><p>{item.delta}</p></div></article>)}</div><div className="caseflow"><div className="flowhead"><span>Case flow</span><small>12 active cases</small></div>{flow.map(item=><div className="flowrow" key={item.label}><span>{item.label}</span><div><i style={{width:item.width}}/></div><b>{item.value}</b></div>)}</div></section>
+      <section className="activitypanel panel"><div className="sectiontitle"><div><p className="eyebrow">Live activity</p><h2>Across Marshall</h2></div><span className="activitylive"><i/> Live</span></div><div className="activityfeed">{activity.map((item,index)=><article key={item.title}><span className={`feedmark ${item.tone}`}>{item.tone==="done"?<Check size={12}/>:<Circle size={8}/>}</span><div><h3>{item.title}</h3><p>{item.detail}</p></div><time>{item.time}</time>{index<activity.length-1?<i className="feedline"/>:null}</article>)}</div><Link className="feedlink" href="/communications">Open complete activity <ChevronRight size={14}/></Link></section>
+      <section className="schedulepanel panel"><div className="sectiontitle"><div><p className="eyebrow">Service schedule</p><h2>Coming up</h2></div><Link className="link" href="/services">View calendar</Link></div><div className="serviceagenda"><article><time><b>11:00</b><small>AM</small></time><span className="agendabar wine"/><div><h3>Green Family Service</h3><p><CalendarDays size={12}/> Marshall Chapel · 90 min</p></div><span className="badge green">Ready</span></article><article><time><b>2:30</b><small>PM</small></time><span className="agendabar amber"/><div><h3>Davis Family Visitation</h3><p><Clock3 size={12}/> Main visitation room · 2 hrs</p></div><span className="badge">Staffing</span></article></div></section>
+      <section className="carepanel panel"><div className="careicon"><HeartHandshake size={20}/></div><p className="eyebrow">Family care</p><h2>Every family, clearly supported.</h2><p>Two updates are due and five document packets are moving through review.</p><div className="carestats"><span><FileCheck2 size={14}/><b>5</b> packets</span><span><Megaphone size={14}/><b>3</b> updates</span></div><Link href="/family-care">Open family care <ArrowUpRight size={14}/></Link></section>
+    </section>
   </div></AppShell>;
 }
