@@ -7,10 +7,24 @@ export async function proxy(request: NextRequest) {
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return response;
   const supabase = createServerClient(url, key, { cookies: { getAll: () => request.cookies.getAll(), setAll(values) { values.forEach(({ name, value }) => request.cookies.set(name, value)); response = NextResponse.next({ request }); values.forEach(({ name, value, options }) => response.cookies.set(name, value, options)); } } });
-  const { data: { user } } = await supabase.auth.getUser();
+  // Family links are validated independently on every read and write.
+  if (request.nextUrl.pathname.startsWith('/family/')) {
+    response.headers.set('Cache-Control','private, no-store');
+    response.headers.set('Referrer-Policy','no-referrer');
+    return response;
+  }
+  const { data, error } = await supabase.auth.getClaims();
+  const signedIn = !error && !!data?.claims;
   const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/forgot-password" || request.nextUrl.pathname === "/account-recovery" || request.nextUrl.pathname.startsWith("/auth/");
-  if (!user && !publicPath) { const target = request.nextUrl.clone(); target.pathname = "/login"; target.search = ""; return NextResponse.redirect(target); }
-  if (user && request.nextUrl.pathname === "/login") { const target = request.nextUrl.clone(); target.pathname = "/"; target.search = ""; return NextResponse.redirect(target); }
+  const redirectTo = (!signedIn && !publicPath) ? '/login' : (signedIn && request.nextUrl.pathname === '/login') ? '/' : null;
+  if (redirectTo) {
+    const target=request.nextUrl.clone(); target.pathname=redirectTo; target.search='';
+    const redirected=NextResponse.redirect(target);
+    response.cookies.getAll().forEach(cookie=>redirected.cookies.set(cookie));
+    redirected.headers.set('Cache-Control','private, no-store');
+    return redirected;
+  }
+  response.headers.set('Cache-Control','private, no-store');
   return response;
 }
 

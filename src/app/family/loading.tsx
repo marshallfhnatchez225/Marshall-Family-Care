@@ -1,0 +1,1 @@
+export default function FamilyLoading(){return <main className="family-portal workflow" role="status"><section className="workflow-card"><p className="eyebrow">Marshall Family Care</p><h1>Opening your private care plan…</h1></section></main>;}

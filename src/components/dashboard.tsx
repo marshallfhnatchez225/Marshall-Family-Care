@@ -1,33 +1,31 @@
 import Link from "next/link";
-import { ArrowUpRight, CalendarDays, Check, ChevronRight, Circle, Clock3, FileCheck2, FolderKanban, HeartHandshake, ListChecks, Megaphone, Plus, Sparkles, Users } from "lucide-react";
+import { ArrowUpRight, FolderKanban, ListChecks, Users, Sparkles, Plus } from "lucide-react";
 import { AppShell } from "./app-shell";
+import { createClient } from "@/lib/supabase/server";
+import { stages, label, dateLabel } from "@/lib/pipeline";
 
-const pulse = [
-  { label: "Active cases", value: "12", delta: "+2 this week", icon: FolderKanban, tone: "wine" },
-  { label: "Due today", value: "7", delta: "3 high priority", icon: ListChecks, tone: "amber" },
-  { label: "Family approvals", value: "5", delta: "2 new today", icon: Users, tone: "blue" },
-];
-const activity = [
-  { title: "Obituary approved", detail: "Green family · Content workflow started", time: "Now", tone: "done" },
-  { title: "Certificates ready", detail: "Williams family · Six certified copies", time: "8m", tone: "ready" },
-  { title: "Service schedule updated", detail: "Davis service · Calendar synchronized", time: "16m", tone: "info" },
-  { title: "Family portal opened", detail: "Thompson family · Primary contact joined", time: "1h", tone: "info" },
-];
-const flow = [
-  { label: "First call", value: 2, width: "28%" }, { label: "Arrangements", value: 4, width: "54%" },
-  { label: "Service ready", value: 3, width: "42%" }, { label: "Aftercare", value: 3, width: "42%" },
-];
-
-export function Dashboard() {
-  return <AppShell><div className="content commandcenter">
-    <section className="commandhero"><div><div className="herokicker"><span className="livepulse"/> Live command center</div><h1>Good afternoon, Jonte.</h1><p>Tuesday, September 8 · Marshall Funeral Home</p></div><div className="heroactions"><button className="quietbutton"><Sparkles size={16}/> Ask Marshall OS</button><Link className="primary" href="/cases"><Plus size={17}/> New case</Link></div></section>
-    <section className="commandgrid">
-      <article className="commandbrief"><div className="briefglow"/><div className="commandbriefhead"><span><Sparkles size={15}/> Executive briefing</span><small>Updated just now</small></div><h2>Three things need your attention.</h2><p className="brieflead">Saturday’s service needs another attendant, two family packets await review, and an approved obituary is ready for publishing.</p><div className="briefactions"><Link href="/tasks">Review priorities <ArrowUpRight size={14}/></Link><span>Generated from live operations</span></div></article>
-      <article className="todaycard card"><div className="todaydate"><small>SEP</small><strong>08</strong></div><div><p className="eyebrow">Today</p><h3>2 services · 4 family updates</h3><p>Your next scheduled service begins at 11:00 AM.</p></div><Link href="/services" aria-label="Open services"><ChevronRight size={18}/></Link></article>
-      <section className="pulsepanel panel"><div className="sectiontitle"><div><p className="eyebrow">Operations pulse</p><h2>What’s moving today</h2></div><Link className="link" href="/analytics">Full analytics <ArrowUpRight size={13}/></Link></div><div className="pulsecards">{pulse.map(({icon:Icon,...item})=><article key={item.label}><span className={`metricicon ${item.tone}`}><Icon size={18}/></span><div><small>{item.label}</small><strong>{item.value}</strong><p>{item.delta}</p></div></article>)}</div><div className="caseflow"><div className="flowhead"><span>Case flow</span><small>12 active cases</small></div>{flow.map(item=><div className="flowrow" key={item.label}><span>{item.label}</span><div><i style={{width:item.width}}/></div><b>{item.value}</b></div>)}</div></section>
-      <section className="activitypanel panel"><div className="sectiontitle"><div><p className="eyebrow">Live activity</p><h2>Across Marshall</h2></div><span className="activitylive"><i/> Live</span></div><div className="activityfeed">{activity.map((item,index)=><article key={item.title}><span className={`feedmark ${item.tone}`}>{item.tone==="done"?<Check size={12}/>:<Circle size={8}/>}</span><div><h3>{item.title}</h3><p>{item.detail}</p></div><time>{item.time}</time>{index<activity.length-1?<i className="feedline"/>:null}</article>)}</div><Link className="feedlink" href="/communications">Open complete activity <ChevronRight size={14}/></Link></section>
-      <section className="schedulepanel panel"><div className="sectiontitle"><div><p className="eyebrow">Service schedule</p><h2>Coming up</h2></div><Link className="link" href="/services">View calendar</Link></div><div className="serviceagenda"><article><time><b>11:00</b><small>AM</small></time><span className="agendabar wine"/><div><h3>Green Family Service</h3><p><CalendarDays size={12}/> Marshall Chapel · 90 min</p></div><span className="badge green">Ready</span></article><article><time><b>2:30</b><small>PM</small></time><span className="agendabar amber"/><div><h3>Davis Family Visitation</h3><p><Clock3 size={12}/> Main visitation room · 2 hrs</p></div><span className="badge">Staffing</span></article></div></section>
-      <section className="carepanel panel"><div className="careicon"><HeartHandshake size={20}/></div><p className="eyebrow">Family care</p><h2>Every family, clearly supported.</h2><p>Two updates are due and five document packets are moving through review.</p><div className="carestats"><span><FileCheck2 size={14}/><b>5</b> packets</span><span><Megaphone size={14}/><b>3</b> updates</span></div><Link href="/family-care">Open family care <ArrowUpRight size={14}/></Link></section>
-    </section>
-  </div></AppShell>;
+export async function Dashboard() {
+ const client=await createClient(); const now=new Date();
+ const [cases,tasks,documents,messages,services,events]=await Promise.all([
+  client.from("cases").select("id,stage").neq("status","closed"),
+  client.from("tasks").select("id",{count:"exact",head:true}).not("status","in","(done,cancelled)"),
+  client.from("documents").select("id",{count:"exact",head:true}).in("status",["submitted","received"]),
+  client.from("communications").select("id",{count:"exact",head:true}).eq("status","draft"),
+  client.from("services").select("id,case_id,title,starts_at,kind").gte("starts_at",now.toISOString()).neq("status","cancelled").order("starts_at").limit(5),
+  client.from("events").select("id,name,payload,occurred_at").order("occurred_at",{ascending:false}).limit(6)
+ ]);
+ const failed=[cases,tasks,documents,messages,services,events].some(r=>r.error);
+ const active=cases.data?.length||0;
+ const pulse=[{label:"Active cases",value:active,icon:FolderKanban,tone:"wine"},{label:"Open tasks",value:tasks.count||0,icon:ListChecks,tone:"amber"},{label:"Awaiting review",value:documents.count||0,icon:Users,tone:"blue"}];
+ return <AppShell><div className="content commandcenter">
+ <section className="commandhero"><div><div className="herokicker"><span className="livepulse"/> Marshall command center</div><h1>Your day at Marshall.</h1><p>{new Intl.DateTimeFormat("en-US",{dateStyle:"full",timeZone:"America/Chicago"}).format(now)}</p></div><Link className="primary" href="/cases#new-case"><Plus size={17}/> New case</Link></section>
+ {failed&&<p className="formerror">Some live information is unavailable. Refresh to try again.</p>}
+ <section className="commandgrid">
+ <article className="commandbrief"><div className="briefglow"/><div className="commandbriefhead"><span><Sparkles size={15}/> Executive briefing</span><small>Current case records</small></div><h2>{documents.count||0} documents need review.</h2><p className="brieflead">{tasks.count||0} checklist items remain open. {messages.count||0} family notification drafts are waiting for staff. {active} cases are moving through the funeral pipeline.</p><div className="briefactions"><Link href="/family-care">Open family care <ArrowUpRight size={14}/></Link></div></article>
+ <article className="todaycard card"><div><p className="eyebrow">Next appointment or service</p><h3>{services.data?.[0]?.title||"Nothing scheduled yet"}</h3><p>{services.data?.[0]?dateLabel(services.data[0].starts_at):"Schedule arrangements from a case."}</p><Link className="link" href={services.data?.[0]?`/cases/${services.data[0].case_id}`:"/cases"}>Open case pipeline →</Link></div></article>
+ <section className="pulsepanel panel"><div className="sectiontitle"><h2>Operations pulse</h2><Link className="link" href="/cases">View pipeline →</Link></div><div className="pulsecards">{pulse.map(({icon:Icon,...p})=><article key={p.label}><span className={`metricicon ${p.tone}`}><Icon size={18}/></span><div><small>{p.label}</small><strong>{p.value}</strong></div></article>)}</div><div className="caseflow">{stages.filter(s=>s!=="complete").map(stage=>{const count=cases.data?.filter(c=>c.stage===stage).length||0;return <div className="flowrow" key={stage}><span>{label(stage)}</span><div><i style={{width:`${active?100*count/active:0}%`}}/></div><b>{count}</b></div>;})}</div></section>
+ <section className="activitypanel panel"><div className="sectiontitle"><h2>Across Marshall</h2></div><div className="activityfeed">{events.data?.map(e=><article key={e.id}><span className="feedmark info">•</span><div><h3>{label(e.name.toLowerCase().replaceAll("."," · "))}</h3><p>{dateLabel(e.occurred_at)}</p>{e.payload?.case_id&&<Link className="link" href={`/cases/${e.payload.case_id}`}>Open case</Link>}</div></article>)}{!events.data?.length&&<p>New case activity will appear here.</p>}</div></section>
+ <section className="schedulepanel panel"><div className="sectiontitle"><h2>Coming up</h2><Link className="link" href="/services">All services</Link></div>{services.data?.map(s=><div className="workflow-row" key={s.id}><div><strong>{s.title||label(s.kind)}</strong><small>{dateLabel(s.starts_at)}</small></div><Link className="link" href={`/cases/${s.case_id}`}>Open case</Link></div>)}{!services.data?.length&&<p>No upcoming appointments or services.</p>}</section>
+ <section className="carepanel panel"><p className="eyebrow">Family care</p><h2>Every family, clearly supported.</h2><p>Packets, arrangements, documents and certificates share one case timeline.</p><Link className="link" href="/family-care">Open family care <ArrowUpRight size={14}/></Link></section>
+ </section></div></AppShell>;
 }
