@@ -22,6 +22,7 @@ export default async function SettingsPage({searchParams}:{searchParams:Promise<
     </header>
     <div className="moduleviews"><span className="active"><Settings2 size={14}/> General</span><span><Users size={14}/> Team & roles</span><span><Workflow size={14}/> Integrations</span><span><ShieldCheck size={14}/> Security</span></div>
     {selected&&SelectedIcon?<section className="settingscallout"><div className="callouticon"><SelectedIcon size={21}/></div><div><p className="eyebrow">Module configuration</p><h2>{selected.label}</h2><p>{selected.description}. This workspace inherits Marshall’s roles, security, and event rules.</p></div><Link href={`/${selected.slug}`}>Return to module <ArrowRight size={14}/></Link></section>:null}
+    <section className="settingscallout"><div><h2>Email & Google Voice</h2><p>Configure automatic email, keep Google Voice for staff-sent texts, and review delivery status.</p></div><Link href="/settings/notifications">Manage delivery <ArrowRight size={14}/></Link></section>
     <section className="settingssummary">
       <article><span><ShieldCheck size={18}/></span><div><small>Security</small><b>Organization scoped</b><p>Role-based access is active</p></div></article>
       <article><span><KeyRound size={18}/></span><div><small>Authentication</small><b>Supabase Auth</b><p>Secure sessions enabled</p></div></article>

@@ -1,6 +1,8 @@
 'use server';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
+import { processEmailQueue } from '@/lib/notification-worker';
 import { createClient } from '@/lib/supabase/server';
 import { portalAccess, tokenHash } from '@/lib/portal';
 import { fields, type SectionKey } from '@/lib/packet-fields';
@@ -26,7 +28,11 @@ export async function pipelineAction(_:ActionState,form:FormData):Promise<Action
   const id=text(form,'case_id'); if(!uuid(id)) throw new Error('Choose a valid case.');
   const {data:c,error}=await client.from('cases').select('id,organization_id,family_id,metadata').eq('id',id).single();check(error);if(!c) throw new Error('Case unavailable.');
   const base={organization_id:c.organization_id,case_id:id};
-  if(op==='stage') {
+  if(op==='contact') {
+   const email=text(form,'email',254);if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new Error('Enter a valid email address.');
+   const enabled=form.get('email_updates_enabled')==='on';if(enabled&&!email)throw new Error('An email address is needed for email updates.');
+   check((await client.from('cases').update({metadata:{...c.metadata,family_email:email,family_mobile:text(form,'mobile',40),email_updates_enabled:enabled,email_consent_recorded_at:enabled?new Date().toISOString():null,email_consent_recorded_by:auth.claims.sub},updated_at:new Date().toISOString()}).eq('id',id).select('id').single()).error);
+  } else if(op==='stage') {
    const stage=text(form,'stage');if(!stages.includes(stage as typeof stages[number])) throw new Error('Invalid stage.');
    check((await client.from('cases').update({stage,status:stage==='complete'?'closed':stage==='aftercare'?'aftercare':stage==='service'?'in_service':stage==='intake'?'intake':'arrangement',closed_at:stage==='complete'?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq('id',id).select('id').single()).error);
   } else if(op==='invite') {
@@ -68,7 +74,9 @@ export async function pipelineAction(_:ActionState,form:FormData):Promise<Action
   } else if(op==='upload') {
    await uploadDocument(client,id,c.organization_id,c.family_id,form,false);
   } else throw new Error('Unknown action.');
-  refresh(id); return {message:op==='sent'?'Delivery recorded.':op==='revoke'?'All family links revoked.':'Saved. Related records and activity are updated.'};
+  refresh(id);
+  after(async()=>{try{await processEmailQueue();}catch{console.error('Email queue processing needs review.');}});
+  return {message:op==='sent'?'Delivery recorded.':op==='revoke'?'All family links revoked.':'Saved. Related records and activity are updated.'};
  } catch(error) { return {error:error instanceof Error?error.message:'Unable to save. Please try again.'}; }
 }
 

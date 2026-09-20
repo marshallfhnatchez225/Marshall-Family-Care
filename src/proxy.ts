@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+  // This endpoint independently verifies its worker bearer secret.
+  if(request.nextUrl.pathname==='/api/notifications/process')return response;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return response;
