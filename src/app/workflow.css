@@ -263,6 +263,103 @@
 .family-hero .brandmark {
   background: #ffffff18;
 }
+.family-packet-card {
+  padding: 28px;
+}
+.packet-intro {
+  max-width: 700px;
+}
+.packet-intro .eyebrow {
+  margin-bottom: 8px;
+  color: var(--wine);
+}
+.packet-intro h2 {
+  margin: 0 0 8px;
+}
+.packet-intro p:last-child {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.packet-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 24px 0 30px;
+}
+.packet-tabs a {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 12px;
+  min-height: 78px;
+  padding: 14px;
+  border: 1px solid #e3d9dd;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #fff, #fbf8f9);
+  color: #2b2024;
+  box-shadow: 0 8px 22px rgba(60, 25, 39, 0.05);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.packet-tabs a:hover {
+  border-color: #bd8b9e;
+  box-shadow: 0 12px 28px rgba(81, 19, 41, 0.1);
+  transform: translateY(-1px);
+}
+.packet-tabs a[aria-current="page"] {
+  border-color: transparent;
+  background: linear-gradient(135deg, #5a162f, #852d48);
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(81, 19, 41, 0.22);
+}
+.packet-tab-number {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #f3e8ec;
+  color: var(--wine);
+  font-size: 12px;
+  font-weight: 800;
+}
+.packet-tabs a[aria-current="page"] .packet-tab-number {
+  background: #ffffff24;
+  color: #fff;
+}
+.packet-tab-copy {
+  min-width: 0;
+}
+.packet-tab-copy strong,
+.packet-tab-copy small {
+  display: block;
+}
+.packet-tab-copy strong {
+  line-height: 1.25;
+}
+.packet-tab-copy small {
+  width: fit-content;
+  margin-top: 7px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f2ecef;
+  color: #78646c;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.packet-tabs a[aria-current="page"] .packet-tab-copy small {
+  background: #ffffff22;
+  color: #f8eaf0;
+}
+.packet-tab-arrow {
+  color: #a78390;
+  font-size: 18px;
+}
+.packet-tabs a[aria-current="page"] .packet-tab-arrow {
+  color: #fff;
+}
 .packet-group {
   grid-column: 1/-1;
   display: grid;
@@ -329,6 +426,16 @@
   }
   .workflow-tabs {
     gap: 5px;
+  }
+  .family-packet-card {
+    padding: 20px;
+  }
+  .packet-tabs {
+    grid-template-columns: 1fr;
+    margin: 20px 0 26px;
+  }
+  .packet-tabs a {
+    min-height: 68px;
   }
   .family-portal {
     padding: 15px;
