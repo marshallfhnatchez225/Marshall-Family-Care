@@ -8,6 +8,10 @@ export async function PipelineBoard({active='cases'}:{active?:string}) {
  const {data,error}=await client.from('cases').select('id,organization_id,family_id,case_number,stage,status,updated_at,metadata').order('opened_at',{ascending:false}).limit(100);
  const cases=((data||[]) as CaseRecord[]).filter(c=>c.stage!=='intake');
  const caseStages=stages.filter(stage=>stage!=='intake');
+ if(active==='cases')return <AppShell active="cases"><div className="content workflow cases-directory-page"><header className="commandhero"><div><p className="eyebrow">Marshall Family Care</p><h1>Cases</h1><p>Select a name to open the family’s case.</p></div><Link className="primary" href="/intake">Start a case in Intake</Link></header>
+ {error&&<p className="formerror">Unable to load cases: {error.message}</p>}
+ <section className="workflow-card case-directory"><h2>Families</h2>{cases.map(c=><Link href={`/cases/${c.id}`} key={c.id} className="case-directory-row"><strong>{caseName(c)}</strong><span>Open case →</span></Link>)}{!error&&!cases.length&&<p>No cases are available yet.</p>}</section>
+ </div></AppShell>;
  return <AppShell active={active}><div className="content workflow"><header className="commandhero"><div><p className="eyebrow">Marshall Family Care</p><h1>{active==='family-care'?'Family care pipeline':'Funeral pipeline'}</h1><p>One case, one shared plan—from the first call through aftercare.</p></div><Link className="primary" href="/intake">Start a case in Intake</Link></header>
  <div className="pipeline-strip graduating">{caseStages.map(stage=><a key={stage} href={`#stage-${stage}`}><span>{label(stage)}</span><strong>{cases.filter(c=>c.stage===stage).length}</strong></a>)}</div>
  {error&&<p className="formerror">Unable to load the pipeline: {error.message}</p>}

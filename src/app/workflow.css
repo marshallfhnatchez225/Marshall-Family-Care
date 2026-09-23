@@ -183,6 +183,31 @@
   padding: 15px 0;
   color: #958991 !important;
 }
+.case-directory {
+  max-width: 860px;
+  padding: 8px 24px;
+}
+.case-directory h2 {
+  padding: 16px 0 8px;
+}
+.case-directory-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 66px;
+  border-top: 1px solid var(--line);
+  transition: color .15s, background .15s;
+}
+.case-directory-row:hover {
+  color: var(--wine);
+}
+.case-directory-row span {
+  color: var(--wine);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .workflow-row {
   display: flex;
   gap: 15px;
