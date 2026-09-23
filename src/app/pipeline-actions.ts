@@ -52,10 +52,16 @@ export async function pipelineAction(_:ActionState,form:FormData):Promise<Action
    check((await client.from('documents').update({status:'requested',updated_at:new Date().toISOString()}).eq('case_id',id).in('metadata->>section',selected)).error);
    const names:Record<string,string>={embalming:'Permission to Embalm',general:'General Information',obituary:'Obituary',deathCertificate:'Death Certificate Worksheet'};
    const list=selected.map(section=>`• ${names[section]}`).join('\n');
-   check((await client.from('communications').insert({...base,direction:'outbound',channel:'internal',subject:'Your Marshall Family Care first-call packet',body:`Please complete these secure first-call documents:\n${list}\n\nOpen your private packet: ${link}\n\nThis link expires in 7 days.`,status:'draft',created_by:auth.claims.sub})).error);
-   check((await client.from('cases').update({stage:'arrangement',status:'arrangement',metadata:{...c.metadata,intake_sent_at:new Date().toISOString(),intake_documents:selected},updated_at:new Date().toISOString()}).eq('id',id)).error);
-   refresh(id);after(async()=>{try{await processEmailQueue();}catch{console.error('Email queue processing needs review.');}});
-   return {message:'First-call packet prepared and the case graduated to Cases. Copy the private link to send by Google Voice if email is paused.',link};
+   const body=`Marshall Funeral Home: Please complete these secure first-call documents:\n${list}\n\n${link}\n\nThis private link expires in 7 days. Reply here if you need help.`;
+   check((await client.from('communications').insert({...base,direction:'outbound',channel:'internal',subject:'Your Marshall Family Care first-call packet',body,status:'draft',created_by:auth.claims.sub})).error);
+   check((await client.from('cases').update({metadata:{...c.metadata,intake_prepared_at:new Date().toISOString(),intake_documents:selected},updated_at:new Date().toISOString()}).eq('id',id)).error);
+   refresh(id);
+   return {message:'Packet ready. Copy the message below, open Google Voice, and press Send. The case will stay in Intake until you confirm it was sent.',link,voicePhone:String(c.metadata.family_mobile||''),voiceMessage:body};
+  } else if(op==='graduate-intake') {
+   if(!c.metadata.intake_prepared_at)throw new Error('Prepare the first-call packet before marking it sent.');
+   check((await client.from('communications').update({status:'sent',channel:'sms',sent_at:new Date().toISOString()}).eq('case_id',id).eq('subject','Your Marshall Family Care first-call packet').eq('status','draft')).error);
+   check((await client.from('cases').update({stage:'arrangement',status:'arrangement',metadata:{...c.metadata,intake_sent_at:new Date().toISOString()},updated_at:new Date().toISOString()}).eq('id',id)).error);
+   refresh(id);return {message:'Google Voice delivery recorded. The case is now in Cases at the Arrangement stage.'};
   } else if(op==='revoke') {
    check((await client.from('portal_links').update({revoked_at:new Date().toISOString()}).eq('case_id',id).is('revoked_at',null)).error);
   } else if(op==='arrangement') {
