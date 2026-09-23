@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { allowedModulesFromClaims, canAccessPath } from "@/lib/access";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -25,6 +26,16 @@ export async function proxy(request: NextRequest) {
     response.cookies.getAll().forEach(cookie=>redirected.cookies.set(cookie));
     redirected.headers.set('Cache-Control','private, no-store');
     return redirected;
+  }
+  if (signedIn && !publicPath && request.nextUrl.pathname !== "/reset-password") {
+    const allowedModules = allowedModulesFromClaims(data.claims as Record<string, unknown>);
+    if (!canAccessPath(request.nextUrl.pathname, allowedModules)) {
+      const target=request.nextUrl.clone(); target.pathname='/'; target.search='';
+      const redirected=NextResponse.redirect(target);
+      response.cookies.getAll().forEach(cookie=>redirected.cookies.set(cookie));
+      redirected.headers.set('Cache-Control','private, no-store');
+      return redirected;
+    }
   }
   response.headers.set('Cache-Control','private, no-store');
   return response;
