@@ -21,8 +21,9 @@ export const fields: Record<SectionKey, Group[]> = {
     { title: "Death certificate order", fields: [{ name: "quantity", label: "Number of death certificates needed", type: "number", required: true }] },
   ],
   embalming: [
+    { title: "Service preference", fields: [{ name: "serviceType", label: "Service type", type: "select", options: ["Traditional Service", "Cremation"], required: true }] },
     { title: "Decedent", fields: [{ name: "decedentName", label: "Name of decedent", required: true }] },
-    { title: "Authorization", fields: [{ name: "permission", label: "Permission to embalm", type: "select", options: ["YES - Permission Granted", "NO - Permission Refused"], required: true }] },
+    { title: "Authorization", fields: [{ name: "permission", label: "Permission to embalm", type: "select", options: ["YES - Permission Granted", "NO - Permission Refused", "NOT APPLICABLE - Cremation selected"], required: true }] },
     { title: "Authorized representative", fields: [{ name: "representativeName", label: "Printed name of authorized representative", required: true }, { name: "relationship", label: "Relationship to decedent", required: true }, { name: "date", label: "Date", type: "date", required: true }, { name: "attestation", label: "Attestation", type: "select", options: ["I confirm and attest to the statements above"], required: true }, { name: "signatureIntent", label: "Intent to sign", type: "select", options: ["I intend for this electronic signature to authorize this form"], required: true }] },
   ],
 };
@@ -32,4 +33,3 @@ export const legacyFieldLabels: Partial<Record<SectionKey, Record<string, string
   obituary: { name: "Name", age: "Age", address: "Address", city: "City", state: "State", zip: "ZIP code", dateOfDeath: "Date of death", placeOfDeath: "Place of death", viewingDate: "Viewing date", viewingTime: "Viewing time", viewingPlace: "Viewing place", wakeDate: "Wake service date", wakeTime: "Wake time", wakePlace: "Wake place", serviceDate: "Funeral service date", serviceTime: "Service time", servicePlace: "Place of funeral service", cemetery: "Cemetery", dateOfBirth: "Date of birth", placeOfBirth: "Place of birth", parents: "Name of parents", contactName: "Contact person name", contactPhone: "Phone" },
   deathCertificate: { fullName: "Full name", age: "Age", dateOfBirth: "Date of birth", streetAddress: "Street address", city: "City", county: "County", state: "State", zip: "ZIP code", placeOfBirth: "Place of birth", veteran: "Veteran?", fatherName: "Father's name", maritalStatus: "Marital status", survivingSpouse: "Surviving spouse", spouseMaiden: "Maiden name", education: "Highest level of education", occupation: "Occupation (longest job held)", industry: "Industry", informantName: "Informant's full name", mailingAddress: "Mailing address" },
 };
-
