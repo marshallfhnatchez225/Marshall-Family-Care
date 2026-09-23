@@ -37,7 +37,7 @@ export default async function CasePage({params}:{params:Promise<{id:string}>}) {
 
  return <AppShell active="cases"><div className="content workflow case-detail-page">
   <Link className="link" href="/cases">← Cases</Link>
-  <header className="commandhero"><div><p className="eyebrow">Family case</p><h1>{caseName(c)}</h1></div><span className="badge">{label(c.stage)}</span></header>
+  <header className="commandhero"><div><p className="eyebrow">Family case</p><h1>{caseName(c)}</h1>{Boolean(c.metadata.next_of_kin_name)&&<p><strong>Next of kin:</strong> {String(c.metadata.next_of_kin_name)}</p>}</div><span className="badge">{label(c.stage)}</span></header>
   {!!loadErrors.length&&<p className="formerror">Some case information could not load. Refresh before making changes.</p>}
 
   <section className="workflow-card" id="arrangement">

@@ -22,8 +22,9 @@ export async function pipelineAction(_:ActionState,form:FormData):Promise<Action
   const op=text(form,'op');
   if(op==='create') {
    const email=text(form,'email',254); if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid email address.');
-   const {data,error}=await client.rpc('create_pipeline_case',{decedent:text(form,'name',200)||'Awaiting family packet',contact_email:email,contact_mobile:text(form,'mobile',40)});check(error);
-   if(form.get('email_updates_enabled')==='on'&&email)check((await client.from('cases').update({metadata:{decedent_name:text(form,'name',200)||'Awaiting family packet',family_email:email,family_mobile:text(form,'mobile',40),email_updates_enabled:true,email_consent_recorded_at:new Date().toISOString(),email_consent_recorded_by:auth.claims.sub}}).eq('id',data)).error);
+   const decedent=text(form,'name',200)||'Awaiting family packet';const mobile=text(form,'mobile',40);const nextOfKin=text(form,'next_of_kin_name',200);const emailUpdates=form.get('email_updates_enabled')==='on'&&!!email;
+   const {data,error}=await client.rpc('create_pipeline_case',{decedent,contact_email:email,contact_mobile:mobile});check(error);
+   check((await client.from('cases').update({metadata:{decedent_name:decedent,next_of_kin_name:nextOfKin,family_email:email,family_mobile:mobile,email_updates_enabled:emailUpdates,email_consent_recorded_at:emailUpdates?new Date().toISOString():null,email_consent_recorded_by:emailUpdates?auth.claims.sub:null}}).eq('id',data)).error);
    refresh(data);
    return {message:'Case and family packet created. Open it from the pipeline below.'};
   }
