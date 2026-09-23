@@ -372,6 +372,63 @@
 .packet-panel > h2 {
   margin-top: 0;
 }
+.voice-form-help {
+  grid-column: 1/-1;
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  border: 1px solid #eadbe1;
+  border-radius: 11px;
+  background: #fbf6f8;
+  color: #684d58;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.voice-field {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+.voice-field > label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.voice-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 8px;
+}
+.voice-field-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 82px;
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid #cda7b5;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--wine);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.voice-field-button:hover {
+  border-color: var(--wine);
+  background: #fbf4f7;
+}
+.voice-field-button.is-listening {
+  border-color: #a1283f;
+  background: #a1283f;
+  color: #fff;
+}
+.voice-field-status {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+}
 .packet-group {
   grid-column: 1/-1;
   display: grid;
@@ -451,6 +508,13 @@
   }
   .packet-panel {
     padding: 20px 16px 22px;
+  }
+  .voice-input-row {
+    grid-template-columns: 1fr;
+  }
+  .voice-field-button {
+    justify-self: start;
+    min-width: 94px;
   }
   .family-portal {
     padding: 15px;
