@@ -13,8 +13,10 @@ export async function AppShell({ active = "", children }: { active?: string; chi
   const allowedModules=allowedModulesFromClaims(claims);
   const visibleModules=allowedModules?modules.filter(module=>allowedModules.includes(module.slug)):modules;
   const email=typeof claims.email==='string'?claims.email:'';
-  const fullName=typeof userMetadata.full_name==='string'&&userMetadata.full_name.trim()?userMetadata.full_name.trim():(email.split('@')[0]||'Marshall staff');
-  const initials=fullName.split(/\s+/).map(part=>part[0]).join('').slice(0,2).toUpperCase();
+  const userId=typeof claims.sub==='string'?claims.sub:'';
+  const {data:profile}=userId?await client.from('users').select('full_name').eq('id',userId).maybeSingle():{data:null};
+  const fullName=String(profile?.full_name||(typeof userMetadata.full_name==='string'&&userMetadata.full_name.trim()?userMetadata.full_name.trim():(email.split('@')[0]||'Marshall staff')));
+  const initials=fullName.split(/\s+/).map((part:string)=>part[0]).join('').slice(0,2).toUpperCase();
   const role=typeof appMetadata.role_name==='string'?appMetadata.role_name:appMetadata.role==='intake_staff'?'Intake Staff':'Administrator';
   return <div className="shell"><aside className="sidebar">
     <Link className="brand" href="/" aria-label="Marshall OS home"><span className="brandmark">M</span><span className="brandcopy"><strong>Marshall</strong><small>Operating System</small></span></Link>
