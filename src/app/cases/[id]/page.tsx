@@ -5,40 +5,66 @@ import { ActionForm } from '@/components/action-form';
 import { AppointmentFields } from '@/components/appointment-fields';
 import { createClient } from '@/lib/supabase/server';
 import { pipelineAction } from '@/app/pipeline-actions';
-import { stages,certificateStates,caseName,label,dateLabel,type CaseRecord,type DocumentRecord,type TaskRecord,type ServiceRecord,type MessageRecord } from '@/lib/pipeline';
+import { caseName, label, dateLabel, type CaseRecord, type DocumentRecord, type ServiceRecord } from '@/lib/pipeline';
 import { fields, labels, legacyFieldLabels, type SectionKey } from '@/lib/packet-fields';
 import { arrangementGroups } from '@/lib/arrangement-fields';
 
-function Hidden({id,op,record}:{id:string;op:string;record?:string}){return <><input type="hidden" name="case_id" value={id}/><input type="hidden" name="op" value={op}/>{record&&<input type="hidden" name="record_id" value={record}/>}</>;}
+function Hidden({id,op,record}:{id:string;op:string;record?:string}) {
+ return <><input type="hidden" name="case_id" value={id}/><input type="hidden" name="op" value={op}/>{record&&<input type="hidden" name="record_id" value={record}/>}</>;
+}
+
 export default async function CasePage({params}:{params:Promise<{id:string}>}) {
  const {id}=await params;
  if(!/^[0-9a-f-]{36}$/i.test(id))notFound();
  const client=await createClient();
- const [caseResult,docsResult,tasksResult,servicesResult,messagesResult,eventsResult]=await Promise.all([
- client.from('cases').select('id,organization_id,family_id,case_number,stage,status,updated_at,metadata').eq('id',id).maybeSingle(),
- client.from('documents').select('id,case_id,title,kind,status,storage_path,metadata,updated_at').eq('case_id',id).order('created_at').limit(100),
- client.from('tasks').select('id,case_id,title,status,family_visible,due_at').eq('case_id',id).order('created_at').limit(100),
- client.from('services').select('id,title,starts_at,status').eq('case_id',id).eq('kind','arrangement'),
- client.from('communications').select('id,subject,body,status,channel,created_at').eq('case_id',id).order('created_at',{ascending:false}).limit(30),
- client.from('events').select('id,name,occurred_at').eq('payload->>case_id',id).order('occurred_at',{ascending:false}).limit(20)
+ const [caseResult,docsResult,servicesResult,eventsResult]=await Promise.all([
+  client.from('cases').select('id,organization_id,family_id,case_number,stage,status,updated_at,metadata').eq('id',id).maybeSingle(),
+  client.from('documents').select('id,case_id,title,kind,status,storage_path,metadata,updated_at').eq('case_id',id).order('created_at').limit(100),
+  client.from('services').select('id,title,starts_at,status').eq('case_id',id).eq('kind','arrangement'),
+  client.from('events').select('id,name,occurred_at').eq('payload->>case_id',id).order('occurred_at',{ascending:false}).limit(20),
  ]);
- if(caseResult.error)throw new Error('Unable to load this case.');if(!caseResult.data)notFound();
- const c=caseResult.data as CaseRecord,docs=(docsResult.data||[])as DocumentRecord[],tasks=(tasksResult.data||[])as TaskRecord[],appointments=(servicesResult.data||[])as ServiceRecord[],messages=(messagesResult.data||[])as MessageRecord[];
- const loadErrors=[docsResult,tasksResult,servicesResult,messagesResult,eventsResult].filter(r=>r.error);
+ if(caseResult.error)throw new Error('Unable to load this case.');
+ if(!caseResult.data)notFound();
+ const c=caseResult.data as CaseRecord;
+ const docs=(docsResult.data||[])as DocumentRecord[];
+ const appointments=(servicesResult.data||[])as ServiceRecord[];
+ const events=eventsResult.data||[];
+ const loadErrors=[docsResult,servicesResult,eventsResult].filter(result=>result.error);
  const sheet=(c.metadata.arrangement_sheet||{})as Record<string,string>;
- const sheetFields=arrangementGroups.flatMap(group=>group.fields).map(f=>[f.name,f.label,f.auto||'']);
- return <AppShell active="cases"><div className="content workflow"><Link className="link" href="/cases">← Funeral pipeline</Link><header className="commandhero"><div><p className="eyebrow">{c.case_number}</p><h1>{caseName(c)}</h1><p>{String(c.metadata.family_email||'Email not recorded')} · {String(c.metadata.family_mobile||'Mobile not recorded')}</p></div><span className="badge">{label(c.stage)}</span></header>
- <nav className="workflow-tabs"><a href="#overview">Overview</a><a href="#family">Family information</a><a href="#arrangement">Funeral details</a><a href="#work">Tasks & files</a></nav>
- <section className="workflow-card" id="family"><p className="eyebrow">Family information</p><h2>Family contact & communication permission</h2><ActionForm action={pipelineAction} submit="Save family contact"><Hidden id={id} op="contact"/><label>Family email<input type="email" name="email" defaultValue={String(c.metadata.family_email||'')}/></label><label>Family mobile<input type="tel" name="mobile" defaultValue={String(c.metadata.family_mobile||'')}/></label><label className="check-label"><input type="checkbox" name="email_updates_enabled" defaultChecked={c.metadata.email_updates_enabled===true}/>The family agrees to receive case updates by email</label></ActionForm><Link className="link" href="/settings/notifications">Email & Google Voice delivery settings →</Link></section>
- {!!loadErrors.length&&<p className="formerror">Some sections could not load. Refresh before making changes.</p>}
- <div className="workflow-grid"><section className="workflow-card" id="overview"><p className="eyebrow">Case progress</p><h2>Next step</h2><ActionForm action={pipelineAction} submit="Move case"><Hidden id={id} op="stage"/><label>Pipeline stage<select name="stage" defaultValue={c.stage}>{stages.map(s=><option key={s} value={s}>{label(s)}</option>)}</select></label></ActionForm></section>
- <section className="workflow-card"><p className="eyebrow">Private family access</p><h2>Share the family portal</h2><p>The family can complete worksheets, upload requested documents, see appointments and certificate progress, and check off their tasks.</p><ActionForm action={pipelineAction} submit="Create private family link"><Hidden id={id} op="invite"/></ActionForm><details><summary>Manage access</summary><ActionForm action={pipelineAction} submit="Revoke all links"><Hidden id={id} op="revoke"/></ActionForm></details></section></div>
- <section className="workflow-card" id="packet"><p className="eyebrow">Original Family Portal worksheets</p><h2>Family packet & staff review</h2><div className="packet-review-grid">{docs.filter(d=>d.metadata.section).map(d=>{const packetSection=d.metadata.section as SectionKey;return <details key={d.id}><summary><strong>{labels[packetSection]||d.title}</strong><span className="badge">{label(d.status)}</span></summary><dl className="answers">{Object.entries(d.metadata.responses||{}).filter(([,v])=>!!v).map(([k,v])=><div key={k}><dt>{fields[packetSection]?.flatMap(g=>g.fields).find(f=>f.name===k)?.label||legacyFieldLabels[packetSection]?.[k]||k}</dt><dd>{k.toLowerCase().includes('signaturedata')?'Signature retained in original portal record':v}</dd></div>)}</dl><ActionForm action={pipelineAction} submit="Save review"><Hidden id={id} op="review" record={d.id}/><label>Review status<select name="status" defaultValue={d.status}>{['incomplete','submitted','needs-follow-up','approved'].map(s=><option key={s} value={s}>{label(s)}</option>)}</select></label></ActionForm></details>})}</div></section>
- <section className="workflow-card" id="arrangement"><p className="eyebrow">Funeral details</p><h2>Arrangement conference & order details</h2>{appointments.map(a=><p key={a.id}><strong>{a.title}</strong> · {dateLabel(a.starts_at)} · {a.status} <Link className="link" href={`/cases/${id}/calendar`}>Add to calendar</Link></p>)}<ActionForm action={pipelineAction} submit="Save appointment"><Hidden id={id} op="arrangement"/><label>Meeting place or instructions<input name="title" required placeholder="Arrangement conference at Marshall Funeral Home"/></label><AppointmentFields/></ActionForm><div className="workflow-grid arrangement-tools"><details open><summary>Staff arrangement sheet · prefilled from family answers</summary><p>Entered merchandise automatically creates order and design tasks.</p><ActionForm action={pipelineAction} submit="Save sheet & create tasks"><Hidden id={id} op="sheet"/>{sheetFields.map(([key,title,source])=><label key={key}>{title}<input name={`sheet.${key}`} defaultValue={sheet[key]??docs.find(d=>d.metadata.section===source.split('.')[0])?.metadata.responses?.[source.split('.')[1]]??''}/></label>)}</ActionForm></details><section className="arrangement-photo"><h3>Photograph the arrangement sheet</h3><p>Use the camera on your phone or upload a clear image. It stays inside this case for staff.</p>{docs.filter(d=>d.kind==='arrangement_sheet_photo').map(d=><div className="workflow-row" key={d.id}><strong>{d.title}</strong><a className="link" href={`/documents/${d.id}/download`}>View image</a></div>)}<ActionForm action={pipelineAction} submit="Save arrangement sheet photo"><Hidden id={id} op="arrangement-photo"/><input type="hidden" name="title" value="Arrangement sheet photo"/><label>Take picture or choose image<input name="file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" required/></label></ActionForm></section></div></section>
- <div className="workflow-grid" id="work"><section className="workflow-card" id="checklist"><p className="eyebrow">Tasks</p><h2>Family & staff checklist</h2>{tasks.map(t=><div className="workflow-row" key={t.id}><div><strong>{t.title}</strong><small>{t.family_visible?'Visible to family':'Staff only'} · {label(t.status)}</small></div><ActionForm action={pipelineAction} submit={t.status==='done'?'Reopen':'Complete'}><Hidden id={id} op="task-status" record={t.id}/><input type="hidden" name="status" value={t.status==='done'?'open':'done'}/></ActionForm></div>)}{!tasks.length&&<p>No checklist items yet.</p>}<ActionForm action={pipelineAction} submit="Add checklist item"><Hidden id={id} op="task"/><label>What is needed?<input name="title" required placeholder="Bring clothing for the service"/></label><label className="check-label"><input name="family_visible" type="checkbox" defaultChecked/>Show to family</label></ActionForm></section>
- <section className="workflow-card" id="certificates"><p className="eyebrow">Certificate tracking</p><h2>Death certificates</h2><p>Each status update appears in the family portal and prepares a notification for staff review.</p><ActionForm action={pipelineAction} submit="Update certificates"><Hidden id={id} op="certificate"/><label>Status<select name="status" defaultValue={docs.find(d=>d.kind==='death_certificate')?.status||'ordered'}>{certificateStates.map(s=><option key={s} value={s}>{label(s)}</option>)}</select></label><label>Copies requested<input type="number" name="quantity" min={1} max={1000} required defaultValue={Number((docs.find(d=>d.kind==='death_certificate')?.metadata as Record<string,unknown>)?.quantity)||undefined}/></label></ActionForm></section></div>
- <section className="workflow-card" id="documents"><p className="eyebrow">Case files</p><h2>Send & receive documents</h2><p>Files are shared privately in the family portal. Request a file below or upload one for the family to download.</p>{docs.filter(d=>!d.metadata.section&&d.kind!=='death_certificate'&&d.kind!=='arrangement_sheet_photo').map(d=><div className="workflow-row" key={d.id}><strong>{d.title}</strong><span className="badge">{d.status}</span>{d.storage_path&&<a className="link" href={`/documents/${d.id}/download`}>Download</a>}</div>)}<div className="workflow-grid"><ActionForm action={pipelineAction} submit="Request document"><Hidden id={id} op="request"/><label>Document needed<input name="title" required placeholder="Insurance policy"/></label></ActionForm><ActionForm action={pipelineAction} submit="Share file with family"><Hidden id={id} op="upload"/><label>Document title<input name="title" required/></label><label>PDF or image · up to 5 MB<input name="file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" required/></label></ActionForm></div></section>
- <section className="workflow-card" id="notifications"><p className="eyebrow">Family updates</p><h2>Notifications ready for staff</h2><p>Email updates can be automatic once Gmail is connected and this family opts in. Google Voice texts are sent by staff.</p>{!messages.length&&<p>No notification drafts yet.</p>}{messages.map(m=><details key={m.id}><summary><strong>{m.subject}</strong><span className="badge">{m.status==='draft'?'Draft · not sent':m.status==='accepted'?'Accepted by Gmail':m.status==='sent'?'Delivery recorded':label(m.status)}</span></summary><p className="notification-copy">{m.body}</p><a className="link" href="https://voice.google.com/" target="_blank" rel="noreferrer">Open Google Voice →</a>{m.status==='draft'&&<ActionForm action={pipelineAction} submit="I sent this · record delivery"><Hidden id={id} op="sent" record={m.id}/><label>Delivered through<select name="channel"><option value="sms">Text / Google Voice</option><option value="email">Email</option><option value="whatsapp">WhatsApp</option><option value="phone">Phone call</option></select></label></ActionForm>}</details>)}</section>
- <section className="workflow-card" id="activity"><p className="eyebrow">Case timeline</p><h2>Recent activity</h2>{eventsResult.data?.map(e=><div className="workflow-row" key={e.id}><strong>{label(e.name.toLowerCase().replaceAll('.',' · '))}</strong><small>{dateLabel(e.occurred_at)}</small></div>)}{!eventsResult.data?.length&&<p>New workflow changes will appear here.</p>}</section>
+ const sheetFields=arrangementGroups.flatMap(group=>group.fields).map(field=>[field.name,field.label,field.auto||'']);
+ const familyForms=docs.filter(document=>document.metadata.section);
+ const activityRow=(event:{id:string;name:string;occurred_at:string})=><div className="workflow-row" key={event.id}><strong>{label(event.name.toLowerCase().replaceAll('.',' · '))}</strong><small>{dateLabel(event.occurred_at)}</small></div>;
+
+ return <AppShell active="cases"><div className="content workflow case-detail-page">
+  <Link className="link" href="/cases">← Cases</Link>
+  <header className="commandhero"><div><p className="eyebrow">Family case</p><h1>{caseName(c)}</h1></div><span className="badge">{label(c.stage)}</span></header>
+  {!!loadErrors.length&&<p className="formerror">Some case information could not load. Refresh before making changes.</p>}
+
+  <section className="workflow-card" id="arrangement">
+   <p className="eyebrow">Arrangement details</p>
+   <h2>Arrangement conference & order details</h2>
+   {appointments.map(appointment=><p key={appointment.id}><strong>{appointment.title}</strong> · {dateLabel(appointment.starts_at)} · {appointment.status} <Link className="link" href={`/cases/${id}/calendar`}>Add to calendar</Link></p>)}
+   <ActionForm action={pipelineAction} submit="Save appointment"><Hidden id={id} op="arrangement"/><label>Meeting place or instructions<input name="title" required placeholder="Arrangement conference at Marshall Funeral Home"/></label><AppointmentFields/></ActionForm>
+   <div className="workflow-grid arrangement-tools">
+    <details open><summary>Staff arrangement sheet · prefilled from family answers</summary><p>Entered merchandise automatically creates order and design tasks.</p><ActionForm action={pipelineAction} submit="Save arrangement details"><Hidden id={id} op="sheet"/>{sheetFields.map(([key,title,source])=><label key={key}>{title}<input name={`sheet.${key}`} defaultValue={sheet[key]??docs.find(document=>document.metadata.section===source.split('.')[0])?.metadata.responses?.[source.split('.')[1]]??''}/></label>)}</ActionForm></details>
+    <section className="arrangement-photo"><h3>Send a photo of the arrangement sheet</h3><p>Take a picture on your phone or choose an existing image.</p>{docs.filter(document=>document.kind==='arrangement_sheet_photo').map(document=><div className="workflow-row" key={document.id}><strong>{document.title}</strong><a className="link" href={`/documents/${document.id}/download`}>View image</a></div>)}<ActionForm action={pipelineAction} submit="Send arrangement sheet photo"><Hidden id={id} op="arrangement-photo"/><input type="hidden" name="title" value="Arrangement sheet photo"/><label>Take picture or choose image<input name="file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" required/></label></ActionForm></section>
+   </div>
+  </section>
+
+  <section className="workflow-card" id="packet">
+   <p className="eyebrow">Family documents</p>
+   <h2>Forms completed by the family</h2>
+   <p>Open a form to view the information the family provided.</p>
+   <div className="packet-review-grid">{familyForms.map(document=>{const packetSection=document.metadata.section as SectionKey;return <details key={document.id}><summary><strong>{labels[packetSection]||document.title}</strong><span className="badge">{label(document.status)}</span></summary><dl className="answers">{Object.entries(document.metadata.responses||{}).filter(([,value])=>!!value).map(([key,value])=><div key={key}><dt>{fields[packetSection]?.flatMap(group=>group.fields).find(field=>field.name===key)?.label||legacyFieldLabels[packetSection]?.[key]||key}</dt><dd>{key.toLowerCase().includes('signaturedata')?'Signature retained in original portal record':value}</dd></div>)}</dl><ActionForm action={pipelineAction} submit="Save review"><Hidden id={id} op="review" record={document.id}/><label>Review status<select name="status" defaultValue={document.status}>{['incomplete','submitted','needs-follow-up','approved'].map(status=><option key={status} value={status}>{label(status)}</option>)}</select></label></ActionForm></details>})}</div>
+   {!familyForms.length&&<p>No family forms are available yet.</p>}
+  </section>
+
+  <section className="workflow-card" id="activity">
+   <p className="eyebrow">Case timeline</p>
+   <h2>Recent activity</h2>
+   {events.slice(0,5).map(activityRow)}
+   {events.length>5&&<details className="activity-more"><summary>View more activity</summary>{events.slice(5).map(activityRow)}</details>}
+   {!events.length&&<p>No activity has been recorded yet.</p>}
+  </section>
  </div></AppShell>;
 }
