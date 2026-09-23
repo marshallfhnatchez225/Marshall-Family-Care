@@ -281,36 +281,40 @@
   color: var(--muted);
   line-height: 1.65;
 }
-.packet-tabs {
+.packet-accordion {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin: 24px 0 30px;
+  gap: 12px;
+  margin-top: 24px;
 }
-.packet-tabs a {
+.packet-accordion-item {
+  overflow: hidden;
+  border: 1px solid #e3d9dd;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(60, 25, 39, 0.05);
+}
+.packet-tab {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) 20px;
   align-items: center;
   gap: 12px;
   min-height: 78px;
-  padding: 14px;
-  border: 1px solid #e3d9dd;
-  border-radius: 14px;
+  padding: 14px 18px;
   background: linear-gradient(145deg, #fff, #fbf8f9);
   color: #2b2024;
-  box-shadow: 0 8px 22px rgba(60, 25, 39, 0.05);
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  transition: background 160ms ease, color 160ms ease;
 }
-.packet-tabs a:hover {
+.packet-accordion-item:hover {
   border-color: #bd8b9e;
   box-shadow: 0 12px 28px rgba(81, 19, 41, 0.1);
-  transform: translateY(-1px);
 }
-.packet-tabs a[aria-current="page"] {
-  border-color: transparent;
+.packet-accordion-item.is-open {
+  border-color: #852d48;
+  box-shadow: 0 14px 30px rgba(81, 19, 41, 0.14);
+}
+.packet-tab[aria-current="page"] {
   background: linear-gradient(135deg, #5a162f, #852d48);
   color: #fff;
-  box-shadow: 0 14px 28px rgba(81, 19, 41, 0.22);
 }
 .packet-tab-number {
   display: grid;
@@ -323,7 +327,7 @@
   font-size: 12px;
   font-weight: 800;
 }
-.packet-tabs a[aria-current="page"] .packet-tab-number {
+.packet-tab[aria-current="page"] .packet-tab-number {
   background: #ffffff24;
   color: #fff;
 }
@@ -349,7 +353,7 @@
   letter-spacing: .05em;
   text-transform: uppercase;
 }
-.packet-tabs a[aria-current="page"] .packet-tab-copy small {
+.packet-tab[aria-current="page"] .packet-tab-copy small {
   background: #ffffff22;
   color: #f8eaf0;
 }
@@ -357,8 +361,16 @@
   color: #a78390;
   font-size: 18px;
 }
-.packet-tabs a[aria-current="page"] .packet-tab-arrow {
+.packet-tab[aria-current="page"] .packet-tab-arrow {
   color: #fff;
+}
+.packet-panel {
+  padding: 24px 22px 26px;
+  border-top: 1px solid #d9bec8;
+  background: linear-gradient(180deg, #fff 0%, #fcfafb 100%);
+}
+.packet-panel > h2 {
+  margin-top: 0;
 }
 .packet-group {
   grid-column: 1/-1;
@@ -430,12 +442,15 @@
   .family-packet-card {
     padding: 20px;
   }
-  .packet-tabs {
-    grid-template-columns: 1fr;
-    margin: 20px 0 26px;
+  .packet-accordion {
+    margin-top: 20px;
   }
-  .packet-tabs a {
+  .packet-tab {
     min-height: 68px;
+    padding: 13px 14px;
+  }
+  .packet-panel {
+    padding: 20px 16px 22px;
   }
   .family-portal {
     padding: 15px;
