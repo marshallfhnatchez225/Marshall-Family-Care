@@ -12,7 +12,7 @@ import type { ActionState } from '@/components/action-form';
 const text=(f:FormData,k:string,max=2000)=>String(f.get(k)||'').trim().slice(0,max);
 const uuid=(value:string)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 function check(error:{message:string}|null) { if(error) throw new Error(error.message); }
-function refresh(id:string) { for(const p of ['/','/cases','/family-care','/documents','/tasks','/services','/communications',`/cases/${id}`]) revalidatePath(p); }
+function refresh(id:string) { for(const p of ['/','/intake','/cases','/family-care','/documents','/tasks','/services','/communications',`/cases/${id}`]) revalidatePath(p); }
 
 export async function pipelineAction(_:ActionState,form:FormData):Promise<ActionState> {
  try {
@@ -22,7 +22,9 @@ export async function pipelineAction(_:ActionState,form:FormData):Promise<Action
   const op=text(form,'op');
   if(op==='create') {
    const email=text(form,'email',254); if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid email address.');
-   const {data,error}=await client.rpc('create_pipeline_case',{decedent:text(form,'name',200)||'Awaiting family packet',contact_email:email,contact_mobile:text(form,'mobile',40)});check(error);refresh(data);
+   const {data,error}=await client.rpc('create_pipeline_case',{decedent:text(form,'name',200)||'Awaiting family packet',contact_email:email,contact_mobile:text(form,'mobile',40)});check(error);
+   if(form.get('email_updates_enabled')==='on'&&email)check((await client.from('cases').update({metadata:{decedent_name:text(form,'name',200)||'Awaiting family packet',family_email:email,family_mobile:text(form,'mobile',40),email_updates_enabled:true,email_consent_recorded_at:new Date().toISOString(),email_consent_recorded_by:auth.claims.sub}}).eq('id',data)).error);
+   refresh(data);
    return {message:'Case and family packet created. Open it from the pipeline below.'};
   }
   const id=text(form,'case_id'); if(!uuid(id)) throw new Error('Choose a valid case.');
@@ -40,6 +42,20 @@ export async function pipelineAction(_:ActionState,form:FormData):Promise<Action
    const token=randomBytes(32).toString('base64url');
    const {error}=await client.from('portal_links').insert({...base,token_hash:tokenHash(token),expires_at:new Date(Date.now()+7*86400000).toISOString()});check(error);
    refresh(id);return {message:'Private link created for 7 days. No message has been sent.',link:`${process.env.NEXT_PUBLIC_APP_URL || 'https://marshall-os.vercel.app'}/family/${token}`};
+  } else if(op==='send-intake') {
+   if(!process.env.SUPABASE_SECRET_KEY&&!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Family portal connection is not configured yet.');
+   const selected=['embalming','general','obituary','deathCertificate'].filter(section=>form.get(`document.${section}`)==='on');
+   if(!selected.length)throw new Error('Choose at least one first-call document.');
+   const token=randomBytes(32).toString('base64url');
+   const link=`${process.env.NEXT_PUBLIC_APP_URL || 'https://marshall-os.vercel.app'}/family/${token}`;
+   check((await client.from('portal_links').insert({...base,token_hash:tokenHash(token),expires_at:new Date(Date.now()+7*86400000).toISOString()})).error);
+   check((await client.from('documents').update({status:'requested',updated_at:new Date().toISOString()}).eq('case_id',id).in('metadata->>section',selected)).error);
+   const names:Record<string,string>={embalming:'Permission to Embalm',general:'General Information',obituary:'Obituary',deathCertificate:'Death Certificate Worksheet'};
+   const list=selected.map(section=>`• ${names[section]}`).join('\n');
+   check((await client.from('communications').insert({...base,direction:'outbound',channel:'internal',subject:'Your Marshall Family Care first-call packet',body:`Please complete these secure first-call documents:\n${list}\n\nOpen your private packet: ${link}\n\nThis link expires in 7 days.`,status:'draft',created_by:auth.claims.sub})).error);
+   check((await client.from('cases').update({stage:'arrangement',status:'arrangement',metadata:{...c.metadata,intake_sent_at:new Date().toISOString(),intake_documents:selected},updated_at:new Date().toISOString()}).eq('id',id)).error);
+   refresh(id);after(async()=>{try{await processEmailQueue();}catch{console.error('Email queue processing needs review.');}});
+   return {message:'First-call packet prepared and the case graduated to Cases. Copy the private link to send by Google Voice if email is paused.',link};
   } else if(op==='revoke') {
    check((await client.from('portal_links').update({revoked_at:new Date().toISOString()}).eq('case_id',id).is('revoked_at',null)).error);
   } else if(op==='arrangement') {
@@ -50,6 +66,13 @@ export async function pipelineAction(_:ActionState,form:FormData):Promise<Action
   } else if(op==='sheet') {
    const sheet:Record<string,string>={};for(const [k,v]of form.entries()) if(k.startsWith('sheet.')&&typeof v==='string') sheet[k.slice(6)]=v.slice(0,2000);
    check((await client.from('cases').update({metadata:{...c.metadata,arrangement_sheet:sheet},updated_at:new Date().toISOString()}).eq('id',id).select('id').single()).error);
+   const taskRules:[string[],string][]=[[['casketName','casketColor'],'Order casket'],[['panel'],'Order panel'],[['overlay'],'Order overlay'],[['boxVault'],'Order vault or box'],[['limousine'],'Book limousine'],[['dvd'],'Design DVD'],[['keyrings'],'Design keyrings']];
+   const needed=taskRules.filter(([keys])=>keys.some(key=>sheet[key]?.trim())).map(([,title])=>title);
+   if(needed.length){const {data:existing,error}=await client.from('tasks').select('title').eq('case_id',id).in('title',needed);check(error);const titles=new Set((existing||[]).map(row=>row.title));const additions=needed.filter(title=>!titles.has(title)).map(title=>({...base,title,description:'Automatically added from the arrangement sheet.',family_visible:false}));if(additions.length)check((await client.from('tasks').insert(additions)).error);}
+  } else if(op==='arrangement-photo') {
+   await uploadDocument(client,id,c.organization_id,c.family_id,form,false,false,'arrangement_sheet_photo');
+   const {data:photoTask,error:photoTaskError}=await client.from('tasks').select('id').eq('case_id',id).eq('title','Review arrangement sheet photo').maybeSingle();check(photoTaskError);
+   if(!photoTask)check((await client.from('tasks').insert({...base,title:'Review arrangement sheet photo',description:'Confirm the photographed sheet details so merchandise and production tasks can be created.',family_visible:false})).error);
   } else if(op==='task') {
    const title=text(form,'title',200);if(!title)throw new Error('Enter a checklist item.');
    check((await client.from('tasks').insert({...base,title,family_visible:form.get('family_visible')==='on'})).error);
@@ -80,7 +103,7 @@ export async function pipelineAction(_:ActionState,form:FormData):Promise<Action
  } catch(error) { return {error:error instanceof Error?error.message:'Unable to save. Please try again.'}; }
 }
 
-async function uploadDocument(client:Awaited<ReturnType<typeof createClient>>,caseId:string,org:string,familyId:string|null,form:FormData,fromFamily:boolean) {
+async function uploadDocument(client:Awaited<ReturnType<typeof createClient>>,caseId:string,org:string,familyId:string|null,form:FormData,fromFamily:boolean,familyVisible=true,kind='attachment') {
  const file=form.get('file');if(!(file instanceof File)||!file.size)throw new Error('Choose a file.');
  const allowed=['application/pdf','image/jpeg','image/png','image/webp'];
  if(!allowed.includes(file.type)||file.size>5*1024*1024)throw new Error('Use PDF, JPG, PNG or WebP, up to 5 MB.');
@@ -97,7 +120,7 @@ async function uploadDocument(client:Awaited<ReturnType<typeof createClient>>,ca
   let q=client.from('documents').update(values).eq('id',recordId).eq('case_id',caseId).eq('kind','requested_document').eq('status','requested');
   if(fromFamily)q=q.eq('metadata->>family_visible','true');
   error=(await q.select('id').single()).error;
- }else error=(await client.from('documents').insert({...values,organization_id:org,case_id:caseId,family_id:familyId,title:text(form,'title',200)||file.name.slice(0,200),kind:'attachment',metadata:{family_visible:true,original_name:file.name.slice(0,200)}})).error;
+ }else error=(await client.from('documents').insert({...values,organization_id:org,case_id:caseId,family_id:familyId,title:text(form,'title',200)||file.name.slice(0,200),kind,metadata:{family_visible:familyVisible,original_name:file.name.slice(0,200)}})).error;
  if(error){await client.storage.from('marshall-documents').remove([path]);check(error);}
 }
 
