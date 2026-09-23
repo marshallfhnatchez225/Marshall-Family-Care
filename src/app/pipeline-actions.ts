@@ -132,13 +132,14 @@ export async function familyAction(_:ActionState,form:FormData):Promise<ActionSt
   const token=text(form,'token',100);const {client,link}=await portalAccess(token);const op=text(form,'op');
   if(op==='section') {
    const section=text(form,'section') as SectionKey;if(!Object.hasOwn(fields,section))throw new Error('Invalid section.');
-   const responses:Record<string,string>={};
-   for(const field of fields[section].flatMap(g=>g.fields).filter(f=>f.name!=='photo')) responses[field.name]=text(form,field.name,5000);
-   const submit=form.get('intent')==='submit';
-   if(submit)for(const field of fields[section].flatMap(g=>g.fields).filter(f=>!['signatureIntent','attestation'].includes(f.name)))if(field.required&&!responses[field.name])throw new Error(`Complete ${field.label}.`);
    const {data:d,error:e}=await client.from('documents').select('id,metadata,status').eq('case_id',link.case_id).eq('metadata->>section',section).eq('metadata->>family_visible','true').single();check(e);
    if(!d)throw new Error('Worksheet unavailable.');
    if(d.status==='approved')throw new Error('This section is approved. Contact Marshall staff to request a correction.');
+   const existing=(d.metadata.responses||{})as Record<string,string>;
+   const responses:Record<string,string>={...existing};
+   for(const field of fields[section].flatMap(g=>g.fields).filter(f=>f.name!=='photo')) responses[field.name]=text(form,field.name,5000);
+   const submit=form.get('intent')==='submit';
+   if(submit)for(const field of fields[section].flatMap(g=>g.fields).filter(f=>!['signatureIntent','attestation'].includes(f.name)))if(field.required&&!responses[field.name])throw new Error(`Complete ${field.label}.`);
    check((await client.from('documents').update({metadata:{...d.metadata,responses},status:submit?'submitted':'incomplete',approved_by:null,approved_at:null,updated_at:new Date().toISOString()}).eq('id',d.id).eq('case_id',link.case_id).eq('metadata->>family_visible','true').neq('status','approved').select('id').single()).error);
   } else if(op==='task') {
    check((await client.from('tasks').update({status:'done',completed_at:new Date().toISOString()}).eq('case_id',link.case_id).eq('id',text(form,'record_id')).eq('family_visible',true).select('id').single()).error);
