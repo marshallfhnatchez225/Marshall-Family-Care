@@ -142,11 +142,15 @@ export async function familyAction(_:ActionState,form:FormData):Promise<ActionSt
    const submit=form.get('intent')==='submit';
    if(submit)for(const field of fields[section].flatMap(g=>g.fields).filter(f=>!['signatureIntent','attestation'].includes(f.name)))if(field.required&&!responses[field.name])throw new Error(`Complete ${field.label}.`);
    check((await client.from('documents').update({metadata:{...d.metadata,responses},status:submit?'submitted':'incomplete',approved_by:null,approved_at:null,updated_at:new Date().toISOString()}).eq('id',d.id).eq('case_id',link.case_id).eq('metadata->>family_visible','true').neq('status','approved').select('id').single()).error);
+   const {error:trackingError}=await client.rpc('record_portal_activity',{target_link:link.id,activity:submit?'form_submitted':'form_saved',section_name:section,record_id:d.id});
+   if(trackingError)console.error('Family form activity tracking needs review.');
   } else if(op==='task') {
    check((await client.from('tasks').update({status:'done',completed_at:new Date().toISOString()}).eq('case_id',link.case_id).eq('id',text(form,'record_id')).eq('family_visible',true).select('id').single()).error);
   } else if(op==='upload') {
    const {data:c,error}=await client.from('cases').select('family_id').eq('id',link.case_id).single();check(error);
    await uploadDocument(client,link.case_id,link.organization_id,c?.family_id,form,true);
+   const {error:trackingError}=await client.rpc('record_portal_activity',{target_link:link.id,activity:'file_uploaded'});
+   if(trackingError)console.error('Family upload activity tracking needs review.');
   } else throw new Error('Unknown action.');
   refresh(link.case_id); revalidatePath(`/family/${token}`); return {message:'Saved. Marshall staff can now see your update.'};
  }catch(error){return {error:error instanceof Error?error.message:'Unable to save. Please try again.'};}

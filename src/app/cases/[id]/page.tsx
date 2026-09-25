@@ -17,11 +17,12 @@ export default async function CasePage({params}:{params:Promise<{id:string}>}) {
  const {id}=await params;
  if(!/^[0-9a-f-]{36}$/i.test(id))notFound();
  const client=await createClient();
- const [caseResult,docsResult,servicesResult,eventsResult]=await Promise.all([
+ const [caseResult,docsResult,servicesResult,eventsResult,portalResult]=await Promise.all([
   client.from('cases').select('id,organization_id,family_id,case_number,stage,status,updated_at,metadata').eq('id',id).maybeSingle(),
   client.from('documents').select('id,case_id,title,kind,status,storage_path,metadata,updated_at').eq('case_id',id).order('created_at').limit(100),
   client.from('services').select('id,title,starts_at,status').eq('case_id',id).eq('kind','arrangement'),
-  client.from('events').select('id,name,occurred_at').eq('payload->>case_id',id).order('occurred_at',{ascending:false}).limit(20),
+  client.from('events').select('id,name,occurred_at,payload').eq('payload->>case_id',id).order('occurred_at',{ascending:false}).limit(20),
+  client.from('portal_links').select('id,created_at,expires_at,revoked_at,first_opened_at,last_opened_at,open_count').eq('case_id',id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
  ]);
  if(caseResult.error)throw new Error('Unable to load this case.');
  if(!caseResult.data)notFound();
@@ -29,11 +30,12 @@ export default async function CasePage({params}:{params:Promise<{id:string}>}) {
  const docs=(docsResult.data||[])as DocumentRecord[];
  const appointments=(servicesResult.data||[])as ServiceRecord[];
  const events=eventsResult.data||[];
- const loadErrors=[docsResult,servicesResult,eventsResult].filter(result=>result.error);
+ const portal=portalResult.data;
+ const loadErrors=[docsResult,servicesResult,eventsResult,portalResult].filter(result=>result.error);
  const sheet=(c.metadata.arrangement_sheet||{})as Record<string,string>;
  const sheetFields=arrangementGroups.flatMap(group=>group.fields).map(field=>[field.name,field.label,field.auto||'']);
  const familyForms=docs.filter(document=>document.metadata.section);
- const activityRow=(event:{id:string;name:string;occurred_at:string})=><div className="workflow-row" key={event.id}><strong>{label(event.name.toLowerCase().replaceAll('.',' · '))}</strong><small>{dateLabel(event.occurred_at)}</small></div>;
+ const activityRow=(event:{id:string;name:string;occurred_at:string;payload:Record<string,unknown>})=>{const section=typeof event.payload?.section==='string'?labels[event.payload.section as SectionKey]:'';const eventLabel:Record<string,string>={'PORTAL.OPENED':'Family portal opened','FORM.OPENED':`${section||'Family form'} opened`,'FORM.SAVED':`${section||'Family form'} saved`,'FORM.SUBMITTED':`${section||'Family form'} submitted`,'PORTAL.FILE_UPLOADED':'Family uploaded a file'};return <div className="workflow-row" key={event.id}><strong>{eventLabel[event.name]||label(event.name.toLowerCase().replaceAll('.',' · '))}</strong><small>{dateLabel(event.occurred_at)}</small></div>};
 
  return <AppShell active="cases"><div className="content workflow case-detail-page">
   <Link className="link" href="/cases">← Cases</Link>
@@ -55,6 +57,7 @@ export default async function CasePage({params}:{params:Promise<{id:string}>}) {
    <p className="eyebrow">Family documents</p>
    <h2>Forms completed by the family</h2>
    <p>Open a form to view the information the family provided.</p>
+   <div className="packet-tracking" aria-label="Family packet tracking"><div><small>Packet sent</small><strong>{c.metadata.intake_sent_at?dateLabel(String(c.metadata.intake_sent_at)):'Not sent'}</strong></div><div><small>First opened</small><strong>{portal?.first_opened_at?dateLabel(portal.first_opened_at):'Not opened yet'}</strong></div><div><small>Last opened</small><strong>{portal?.last_opened_at?dateLabel(portal.last_opened_at):'Not opened yet'}</strong></div><div><small>Portal visits</small><strong>{portal?.open_count||0}</strong></div></div>
    <div className="packet-review-grid">{familyForms.map(document=>{const packetSection=document.metadata.section as SectionKey;return <details key={document.id}><summary><strong>{labels[packetSection]||document.title}</strong><span className="badge">{label(document.status)}</span></summary><dl className="answers">{Object.entries(document.metadata.responses||{}).filter(([,value])=>!!value).map(([key,value])=><div key={key}><dt>{fields[packetSection]?.flatMap(group=>group.fields).find(field=>field.name===key)?.label||legacyFieldLabels[packetSection]?.[key]||key}</dt><dd>{key.toLowerCase().includes('signaturedata')?'Signature retained in original portal record':value}</dd></div>)}</dl><ActionForm action={pipelineAction} submit="Save review"><Hidden id={id} op="review" record={document.id}/><label>Review status<select name="status" defaultValue={document.status}>{['incomplete','submitted','needs-follow-up','approved'].map(status=><option key={status} value={status}>{label(status)}</option>)}</select></label></ActionForm></details>})}</div>
    {!familyForms.length&&<p>No family forms are available yet.</p>}
   </section>
