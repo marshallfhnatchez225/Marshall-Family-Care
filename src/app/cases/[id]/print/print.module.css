@@ -1,0 +1,28 @@
+.page{max-width:850px;margin:0 auto;padding:32px 24px 80px;color:#211a1d;background:#fff;font:14px/1.5 Arial,sans-serif}
+.controls{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:32px}
+.controls a{color:#761d38;font-weight:700}
+.header{border-bottom:2px solid #761d38;padding-bottom:18px;margin-bottom:26px}
+.header p{margin:0 0 6px;color:#5e5559}
+.header h1{font-size:26px;margin:0 0 5px}
+.header h2{font-size:18px;font-weight:500;margin:0}
+.document{margin:0 0 28px;break-inside:avoid-page}
+.document h2{font-size:19px;margin:0 0 12px}
+.documentHead{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid #c9bec3;margin-bottom:12px}
+.documentHead span{font-size:12px;color:#5e5559;text-transform:capitalize}
+.group{margin:0 0 22px}
+.group h3{font-size:15px;margin:0 0 5px;color:#761d38}
+.answers{margin:0}
+.answers div{display:grid;grid-template-columns:38% 1fr;gap:16px;border-bottom:1px solid #e5dfe2;padding:7px 0;break-inside:avoid}
+.answers dt{color:#5e5559}
+.answers dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.empty{color:#726a6e;font-style:italic}
+@media print{
+ @page{size:letter;margin:.65in}
+ .page{max-width:none;padding:0;margin:0;font-size:11pt;color:#000}
+ .controls{display:none}
+ .header{margin-bottom:20px}
+ .document{break-inside:auto;page-break-after:always}
+ .document:last-child{page-break-after:auto}
+ .group{break-inside:avoid-page}
+ .answers div{border-color:#ccc}
+}
