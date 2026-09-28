@@ -4,26 +4,59 @@ import { AppShell } from "./app-shell";
 import { createClient } from "@/lib/supabase/server";
 import { stages, label, dateLabel } from "@/lib/pipeline";
 import { allowedModulesFromClaims } from "@/lib/access";
+import { HomeCalendar } from './home-calendar';
+import { centralParts, gridDates, monthValue, parseSheetDate, parseSheetTime, type CalendarItem, type CalendarKind } from '@/lib/home-calendar';
 
-export async function Dashboard() {
+export async function Dashboard({ requestedMonth }: { requestedMonth?: string }) {
  const client=await createClient(); const now=new Date();
+ const month=monthValue(requestedMonth,now); const grid=gridDates(month);
+ const firstDate=grid[0]; const lastDate=grid.at(-1)!;
+ const serviceStart=new Date(`${firstDate}T00:00:00Z`);serviceStart.setUTCDate(serviceStart.getUTCDate()-1);
+ const serviceEnd=new Date(`${lastDate}T00:00:00Z`);serviceEnd.setUTCDate(serviceEnd.getUTCDate()+2);
  const {data:auth}=await client.auth.getClaims();
  const allowedModules=allowedModulesFromClaims((auth?.claims??{}) as Record<string,unknown>);
  const restricted=allowedModules!==null;
- const [cases,tasks,documents,messages,services,events]=await Promise.all([
-  client.from("cases").select("id,stage").neq("status","closed"),
+ const [cases,tasks,documents,messages,services,events,calendarRows,calendarServices]=await Promise.all([
+  client.from("cases").select("id,stage,case_number,metadata").neq("status","closed"),
   client.from("tasks").select("id",{count:"exact",head:true}).not("status","in","(done,cancelled)"),
   client.from("documents").select("id",{count:"exact",head:true}).in("status",["submitted","received"]),
   client.from("communications").select("id",{count:"exact",head:true}).eq("status","draft"),
   client.from("services").select("id,case_id,title,starts_at,kind").gte("starts_at",now.toISOString()).neq("status","cancelled").order("starts_at").limit(5),
-  client.from("events").select("id,name,payload,occurred_at").order("occurred_at",{ascending:false}).limit(6)
+  client.from("events").select("id,name,payload,occurred_at").order("occurred_at",{ascending:false}).limit(6),
+  client.from('calendar_entries').select('id,case_id,title,kind,event_date,start_time,end_time,location,staff,status,source,notes').gte('event_date',firstDate).lte('event_date',lastDate).order('event_date').limit(500),
+  client.from('services').select('id,case_id,title,kind,starts_at,ends_at,status').gte('starts_at',serviceStart.toISOString()).lt('starts_at',serviceEnd.toISOString()).neq('status','cancelled').limit(500)
  ]);
  const failed=[cases,tasks,documents,messages,services,events].some(r=>r.error);
+ const caseOptions=(cases.data??[]).map(c=>({id:c.id,name:String(c.metadata?.decedent_name||c.case_number)}));
+ const caseNames=new Map(caseOptions.map(c=>[c.id,c.name]));
+ const serviceItems:CalendarItem[]=(calendarServices.data??[]).flatMap(service=>{
+  if(!service.starts_at)return [];
+  const start=centralParts(service.starts_at);if(start.date<firstDate||start.date>lastDate)return [];
+  const kind=(['arrangement','funeral','wake','visitation','preneed'].includes(service.kind)?service.kind:'other') as CalendarKind;
+  return [{id:`service-${service.id}`,caseId:service.case_id,title:`${caseNames.get(service.case_id)||'Case'} · ${service.title||label(service.kind)}`,kind,date:start.date,time:start.time,endTime:service.ends_at?centralParts(service.ends_at).time:null,location:'',staff:'',status:'confirmed' as const,source:'case_appointment' as const,notes:''}];
+ });
+ const serviceKeys=new Set(serviceItems.map(item=>`${item.caseId}|${item.kind}|${item.date}`));
+ const sheetItems:CalendarItem[]=(cases.data??[]).flatMap(c=>{
+  const sheet=(c.metadata?.arrangement_sheet??{}) as Record<string,string>;
+  const name=String(c.metadata?.decedent_name||c.case_number);
+  const fields:{kind:CalendarKind;date:string|undefined;time:string|undefined;location:string|undefined;notes:string|undefined}[]=[
+   {kind:'funeral',date:sheet.serviceDate,time:sheet.serviceTime,location:sheet.serviceLocation,notes:sheet.serviceNotes},
+   {kind:'wake',date:sheet.wakeDate,time:sheet.wakeTime,location:sheet.wakeLocation,notes:sheet.wake},
+   {kind:'visitation',date:sheet.visitationDate,time:sheet.visitationTime,location:sheet.visitationLocation,notes:sheet.visitation},
+  ];
+  return fields.flatMap(field=>{
+   const date=parseSheetDate(field.date);if(!date||date<firstDate||date>lastDate||serviceKeys.has(`${c.id}|${field.kind}|${date}`))return [];
+   return [{id:`sheet-${c.id}-${field.kind}`,caseId:c.id,title:`${name} ${field.kind}`,kind:field.kind,date,time:parseSheetTime(field.time),endTime:null,location:field.location||'',staff:'',status:'confirmed' as const,source:'arrangement_sheet' as const,notes:field.notes||''}];
+  });
+ });
+ const savedItems:CalendarItem[]=(calendarRows.data??[]).map(row=>({id:row.id,caseId:row.case_id,title:row.title,kind:row.kind as CalendarKind,date:row.event_date,time:row.start_time?.slice(0,5)??null,endTime:row.end_time?.slice(0,5)??null,location:row.location??'',staff:row.staff??'',status:row.status as CalendarItem['status'],source:row.source as CalendarItem['source'],notes:row.notes??''}));
+ const calendarItems=[...savedItems,...serviceItems,...sheetItems];
  const active=cases.data?.length||0;
  const pulse=[{label:"Active cases",value:active,icon:FolderKanban,tone:"wine"},{label:"Open tasks",value:tasks.count||0,icon:ListChecks,tone:"amber"},{label:"Awaiting review",value:documents.count||0,icon:Users,tone:"blue"}];
  return <AppShell><div className="content commandcenter">
  <section className="commandhero"><div><div className="herokicker"><span className="livepulse"/> Marshall command center</div><h1>Your day at Marshall.</h1><p>{new Intl.DateTimeFormat("en-US",{dateStyle:"full",timeZone:"America/Chicago"}).format(now)}</p></div><Link className="primary" href="/intake#new-case"><Plus size={17}/> New case</Link></section>
  {failed&&<p className="formerror">Some live information is unavailable. Refresh to try again.</p>}
+ <HomeCalendar month={month} today={centralParts(now.toISOString()).date} items={calendarItems} cases={caseOptions} loadingError={Boolean(calendarRows.error||calendarServices.error)}/>
  <section className="commandgrid">
  <article className="commandbrief"><div className="briefglow"/><div className="commandbriefhead"><span><Sparkles size={15}/> {restricted?'Staff briefing':'Executive briefing'}</span><small>Current case records</small></div><h2>{documents.count||0} documents need review.</h2><p className="brieflead">{tasks.count||0} checklist items remain open. {messages.count||0} family notification drafts are waiting for staff. {active} cases are moving through the funeral pipeline.</p><div className="briefactions"><Link href={restricted?'/cases':'/family-care'}>{restricted?'Open cases':'Open family care'} <ArrowUpRight size={14}/></Link></div></article>
  <article className="todaycard card"><div><p className="eyebrow">Next appointment or service</p><h3>{services.data?.[0]?.title||"Nothing scheduled yet"}</h3><p>{services.data?.[0]?dateLabel(services.data[0].starts_at):"Schedule arrangements from a case."}</p><Link className="link" href={services.data?.[0]?`/cases/${services.data[0].case_id}`:"/cases"}>Open case pipeline →</Link></div></article>
