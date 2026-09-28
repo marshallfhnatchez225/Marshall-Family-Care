@@ -41,6 +41,14 @@ function linesFor(value:string,font:PDFFont,size:number,width:number) {
  return lines;
 }
 
+function fieldLabel(section:SectionKey,key:string) {
+ if(section==='general'&&key==='funeralTime')return 'Funeral time';
+ if(section==='general'&&key==='timeOfDeath')return 'Time of death';
+ return fields[section].flatMap(group=>group.fields).find(field=>field.name===key)?.label
+  || legacyFieldLabels[section]?.[key]
+  || key.replace(/([a-z])([A-Z])/g,'$1 $2');
+}
+
 async function makePdf(c:CaseRecord,docs:DocumentRecord[],appointments:ServiceRecord[],scope:string) {
  const pdf=await PDFDocument.create();
  const regular=await pdf.embedFont(StandardFonts.Helvetica);
@@ -80,6 +88,35 @@ async function makePdf(c:CaseRecord,docs:DocumentRecord[],appointments:ServiceRe
   y-=10;
  }
 
+ function compactForm(entries:[string,string][]) {
+  const gutter=20;
+  const columnWidth=(usableWidth-gutter)/2;
+  const topY=y;
+  const prepared=entries.map(([title,value])=>{
+   const lines=linesFor(value||'Not provided',regular,9.5,columnWidth);
+   return {title,lines,height:12+lines.length*12+8};
+  });
+  const available=topY-58;
+  const target=Math.min(available,prepared.reduce((sum,item)=>sum+item.height,0)/2);
+  let column=0;
+  let used=0;
+  let position=topY;
+  for(const item of prepared){
+   if(column===0&&used>0&&used+item.height>target){column=1;position=topY;}
+   if(position-item.height<58){
+    if(column===0){column=1;position=topY;}
+    else {beginPage(`${currentTitle} (continued)`);column=0;position=y;}
+   }
+   const x=margin+column*(columnWidth+gutter);
+   page.drawText(safe(item.title),{x,y:position,size:8,font:bold,color:gray});
+   position-=12;
+   for(const textLine of item.lines){page.drawText(textLine,{x,y:position,size:9.5,font:regular});position-=12;}
+   page.drawLine({start:{x,y:position+3},end:{x:x+columnWidth,y:position+3},thickness:.4,color:pale});
+   position-=8;
+   if(column===0)used+=item.height;
+  }
+ }
+
  if(scope==='arrangement') {
   beginPage('Arrangement details');
   section('Arrangement conference');
@@ -103,13 +140,11 @@ async function makePdf(c:CaseRecord,docs:DocumentRecord[],appointments:ServiceRe
    const sectionKey=doc.metadata.section as SectionKey;
    if(!sections.includes(sectionKey))continue;
    beginPage(labels[sectionKey]);
-   pair('Review status',label(doc.status));
    const entries=Object.entries(doc.metadata.responses||{}).filter(([key,value])=>Boolean(value)&&!key.toLowerCase().includes('signaturedata'));
-   if(!entries.length){pair('Saved answers','No answers saved yet.');continue;}
-   for(const [key,value] of entries){
-    const title=fields[sectionKey].flatMap(group=>group.fields).find(field=>field.name===key)?.label||legacyFieldLabels[sectionKey]?.[key]||key.replace(/([a-z])([A-Z])/g,'$1 $2');
-    pair(title,value);
-   }
+   if(!entries.length){pair('Review status',label(doc.status));pair('Saved answers','No answers saved yet.');continue;}
+   const order=fields[sectionKey].flatMap(group=>group.fields).map(field=>field.name);
+   entries.sort(([a],[b])=>(order.indexOf(a)<0?Number.MAX_SAFE_INTEGER:order.indexOf(a))-(order.indexOf(b)<0?Number.MAX_SAFE_INTEGER:order.indexOf(b)));
+   compactForm([['Review status',label(doc.status)],...entries.map(([key,value])=>[fieldLabel(sectionKey,key),value] as [string,string])]);
   }
  }
 
