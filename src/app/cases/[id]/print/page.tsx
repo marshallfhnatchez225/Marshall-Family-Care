@@ -64,7 +64,7 @@ export default async function PrintCasePage({params,searchParams}:{params:Promis
    const section=doc.metadata.section as SectionKey;
    if (!isSection(section)) return null;
    const entries=Object.entries(doc.metadata.responses||{}).filter(([key,value])=>Boolean(value)&&!key.toLowerCase().includes('signaturedata')).map(([key,value])=>[answerLabel(section,key),String(value)] as [string,string]);
-   return <section className={styles.document} key={doc.id}><div className={styles.documentHead}><h2>{labels[section]}</h2><span>{label(doc.status)}</span></div><Answers entries={entries}/></section>;
+   return <section className={`${styles.document} ${styles.familyDocument}`} key={doc.id}><div className={styles.documentHead}><h2>{labels[section]}</h2><span>{label(doc.status)}</span></div><Answers entries={entries}/></section>;
   }):<p className={styles.empty}>No family answers have been saved yet.</p>}
  </main>;
 }
