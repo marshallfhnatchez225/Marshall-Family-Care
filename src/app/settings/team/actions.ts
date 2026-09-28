@@ -9,13 +9,15 @@ const modules = ['', 'intake', 'cases', 'tasks'];
 const permissions = ['cases.*', 'families.*', 'documents.*', 'communications.*', 'services.read', 'tasks.*'];
 const roleKey = 'intake_tasks_staff';
 
-export async function inviteStaff(_: ActionState, form: FormData): Promise<ActionState> {
+export async function createStaff(_: ActionState, form: FormData): Promise<ActionState> {
   const name = String(form.get('name') ?? '').trim().replace(/\s+/g, ' ');
   const email = String(form.get('email') ?? '').trim().toLowerCase();
   const phone = String(form.get('phone') ?? '').replace(/\D/g, '');
+  const password = String(form.get('password') ?? '');
   if (name.length < 2 || name.length > 150) return { error: 'Enter the staff member’s full name.' };
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: 'Enter a valid email address.' };
-  if (phone && phone.length !== 10) return { error: 'Enter a 10-digit Google Voice recipient number.' };
+  if (phone.length !== 10) return { error: 'Enter a 10-digit Google Voice recipient number.' };
+  if (password.length < 8) return { error: 'Enter a password with at least 8 characters.' };
 
   const session = await createClient();
   const { data: auth, error: authError } = await session.auth.getClaims();
@@ -44,34 +46,20 @@ export async function inviteStaff(_: ActionState, form: FormData): Promise<Actio
   const { data: role, error: roleError } = await admin.from('roles').upsert({ organization_id: orgId, key: roleKey, name: 'Intake & Tasks Staff', permissions }, { onConflict: 'organization_id,key' }).select('id').single();
   if (roleError || !role) return { error: 'Could not prepare the limited staff role.' };
 
-  const redirectTo = 'https://marshall-os.vercel.app/auth/callback?next=/reset-password';
-  let invitedUser;
-  let link: string | undefined;
-  if (phone) {
-    const { data, error } = await admin.auth.admin.generateLink({ type: 'invite', email, options: { data: { full_name: name }, redirectTo } });
-    if (error || !data.user || !data.properties?.action_link) return { error: 'The invitation could not be prepared. Check whether this email already has an account.' };
-    invitedUser = data.user;
-    link = data.properties.action_link;
-  } else {
-    const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: name }, redirectTo });
-    if (error || !data.user) return { error: 'The invitation could not be sent. Check whether this email already has an account.' };
-    invitedUser = data.user;
-  }
+  const { data: created, error: createError } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: name } });
+  if (createError || !created.user) return { error: 'The account could not be created. Check whether this email already has an account or the password meets account requirements.' };
 
-  const userId = invitedUser.id;
+  const userId = created.user.id;
   const { error: userError } = await admin.from('users').upsert({ id: userId, organization_id: orgId, full_name: name, email, status: 'active' }, { onConflict: 'id' });
   const { error: assignmentError } = userError ? { error: userError } : await admin.from('user_roles').upsert({ organization_id: orgId, user_id: userId, role_id: role.id }, { onConflict: 'user_id,role_id' });
   const { error: metadataError } = userError || assignmentError ? { error: userError || assignmentError } : await admin.auth.admin.updateUserById(userId, {
-    app_metadata: { ...invitedUser.app_metadata, organization_id: orgId, role: roleKey, role_name: 'Intake & Tasks Staff', allowed_modules: modules },
+    app_metadata: { ...created.user.app_metadata, organization_id: orgId, role: roleKey, role_name: 'Intake & Tasks Staff', allowed_modules: modules },
   });
   if (userError || assignmentError || metadataError) {
-    return { error: 'The invitation was prepared, but access setup needs review. The account cannot enter Marshall OS until setup is repaired.' };
+    await admin.auth.admin.deleteUser(userId);
+    return { error: 'Access setup failed. The incomplete account was removed; please try again.' };
   }
 
   revalidatePath('/settings/team');
-  if (phone) {
-    if (!link) return { error: 'The account was prepared, but the setup link was unavailable. Review the invitation before sending.' };
-    return { message: `Account prepared for ${email}. Review and send the setup link through Google Voice.`, voicePhone: phone, voiceMessage: `Linda, your Marshall OS staff account is ready. Open this private link to set your password: ${link}` };
-  }
-  return { message: `Invitation sent to ${email}. Access is limited to Home, Intake, Cases, and Tasks.` };
+  return { message: `Account created for ${email}. The password is set; review and send the login link through Google Voice.`, voicePhone: phone, voiceMessage: `Linda, your Marshall OS staff account is ready. Sign in at https://marshall-os.vercel.app/login using ${email} and the password Jonte gave you.` };
 }
