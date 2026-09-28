@@ -123,7 +123,7 @@ async function makePdf(c:CaseRecord,docs:DocumentRecord[],appointments:ServiceRe
 
 export async function GET(request:Request,{params}:{params:Promise<{id:string}>}) {
  const {id}=await params;
- if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return new Response('Invalid case',{status:400});
+ if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return new Response('Invalid case',{status:400});
  const scope=new URL(request.url).searchParams.get('scope')||'family';
  if(scope!=='arrangement'&&scope!=='family'&&!sections.includes(scope as SectionKey))return new Response('Invalid print selection',{status:400});
  const client=await createClient();
