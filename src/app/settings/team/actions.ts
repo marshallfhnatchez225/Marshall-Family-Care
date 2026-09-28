@@ -17,7 +17,7 @@ export async function createStaff(_: ActionState, form: FormData): Promise<Actio
   const confirmation = String(form.get('confirm_password') ?? '');
   if (name.length < 2 || name.length > 150) return { error: 'Enter the staff member’s full name.' };
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: 'Enter a valid email address.' };
-  if (phone.length !== 10) return { error: 'Enter a 10-digit Google Voice recipient number.' };
+  if (phone && phone.length !== 10) return { error: 'Enter a 10-digit Google Voice recipient number, or leave it blank.' };
   if (password.length < 8) return { error: 'Enter a password with at least 8 characters.' };
   if (password !== confirmation) return { error: 'The passwords do not match.' };
 
@@ -63,7 +63,7 @@ export async function createStaff(_: ActionState, form: FormData): Promise<Actio
     });
     if (updateError) return { error: 'Could not set the existing account password. Please try again.' };
     revalidatePath('/settings/team');
-    return { message: `Access and password updated for ${email}. Review and send the login link through Google Voice.`, voicePhone: phone, voiceMessage: `${name.split(' ')[0]}, your Marshall OS staff account is ready. Sign in at https://marshall-os.vercel.app/login using ${email} and the password Jonte gave you.` };
+    return { message: `Access and password updated for ${email}.${phone ? ' Review and send the login link through Google Voice.' : ''}`, ...(phone ? { voicePhone: phone, voiceMessage: `${name.split(' ')[0]}, your Marshall OS staff account is ready. Sign in at https://marshall-os.vercel.app/login using ${email} and the password Jonte gave you.` } : {}) };
   }
 
   const { data: created, error: createError } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: name } });
@@ -81,5 +81,5 @@ export async function createStaff(_: ActionState, form: FormData): Promise<Actio
   }
 
   revalidatePath('/settings/team');
-  return { message: `Account created for ${email}. The password is set; review and send the login link through Google Voice.`, voicePhone: phone, voiceMessage: `${name.split(' ')[0]}, your Marshall OS staff account is ready. Sign in at https://marshall-os.vercel.app/login using ${email} and the password Jonte gave you.` };
+  return { message: `Account created for ${email}. The password is set.${phone ? ' Review and send the login link through Google Voice.' : ''}`, ...(phone ? { voicePhone: phone, voiceMessage: `${name.split(' ')[0]}, your Marshall OS staff account is ready. Sign in at https://marshall-os.vercel.app/login using ${email} and the password Jonte gave you.` } : {}) };
 }
