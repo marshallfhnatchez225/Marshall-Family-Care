@@ -1,12 +1,12 @@
-# Earlier Google Voice browser bridge
+# Google Voice browser delivery
 
-New Intake packets now use the prepared-message handoff. The browser sender is paused and new packets are not added to its queue. This page documents how to reconcile deliveries already queued before that change.
+Intake records the family name, email, and mobile number first. Selecting **Send documents through Google Voice** creates a private packet link and queues the exact text for a browser send. The queue persists across page refreshes.
 
 Marshall OS uses an auditable queue plus the signed-in Marshall Google Voice browser. It does not store Google credentials or expose a public sending endpoint.
 
 ## Delivery sequence
 
-1. Before the handoff change, a signed-in staff member selected first-call documents and chose **Send documents through Google Voice** in Intake.
+1. A signed-in staff member selects first-call documents and chooses **Send documents through Google Voice** in Intake.
 2. The database transaction creates one private portal link, one communication, and one queued delivery. Repeated clicks return the existing delivery.
 3. The local Codex task claims the delivery, rechecks the current case stage, phone number, and private-link validity, and then starts the browser attempt.
 4. The task sends the exact queued message through `marshallfhnatchez225@gmail.com` and verifies that the outgoing message appears in Google Voice.
@@ -22,4 +22,4 @@ Marshall OS uses an auditable queue plus the signed-in Marshall Google Voice bro
 
 ## Local requirement
 
-The local browser sender is paused. Inspect any existing queued or uncertain job in Marshall OS and Google Voice before resolving it. Do not assume a queued job was delivered.
+The Codex task must be active to complete a browser send; the website cannot send through Google Voice by itself. Use the signed-in Marshall Google Voice browser. Inspect any queued or uncertain job in Marshall OS and Google Voice before resolving it. Do not assume a queued job was delivered.
