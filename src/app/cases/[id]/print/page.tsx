@@ -24,7 +24,7 @@ function answerLabel(section: SectionKey, key: string) {
 
 function Answers({entries}:{entries:[string,string][]}) {
  if (!entries.length) return <p className={styles.empty}>No answers saved yet.</p>;
- return <dl className={styles.answers}>{entries.map(([title,value]) => <div key={title}><dt>{title}</dt><dd>{value}</dd></div>)}</dl>;
+ return <dl className={styles.answers}>{entries.map(([title,value],index) => <div key={`${title}-${index}`}><dt>{title}</dt><dd>{value}</dd></div>)}</dl>;
 }
 
 export default async function PrintCasePage({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{scope?:string}>}) {
@@ -43,7 +43,7 @@ export default async function PrintCasePage({params,searchParams}:{params:Promis
  const docs=(docsResult.data||[]) as DocumentRecord[];
  const appointments=(servicesResult.data||[]) as ServiceRecord[];
  const sheet=(c.metadata.arrangement_sheet||{}) as Record<string,string>;
- const selectedDocs=scope==='family'?docs:scope==='arrangement'?[]:docs.filter(doc=>doc.metadata.section===scope);
+ const selectedDocs=scope==='family'?docs.filter(doc=>Object.values(doc.metadata.responses||{}).some(Boolean)):scope==='arrangement'?[]:docs.filter(doc=>doc.metadata.section===scope);
  const title=scope==='arrangement'?'Arrangement details':scope==='family'?'Family documents':labels[scope];
 
  return <main className={styles.page}>
@@ -64,6 +64,6 @@ export default async function PrintCasePage({params,searchParams}:{params:Promis
    if (!isSection(section)) return null;
    const entries=Object.entries(doc.metadata.responses||{}).filter(([key,value])=>Boolean(value)&&!key.toLowerCase().includes('signaturedata')).map(([key,value])=>[answerLabel(section,key),String(value)] as [string,string]);
    return <section className={styles.document} key={doc.id}><div className={styles.documentHead}><h2>{labels[section]}</h2><span>{label(doc.status)}</span></div><Answers entries={entries}/></section>;
-  }):<p className={styles.empty}>No family forms are available yet.</p>}
+  }):<p className={styles.empty}>No family answers have been saved yet.</p>}
  </main>;
 }
