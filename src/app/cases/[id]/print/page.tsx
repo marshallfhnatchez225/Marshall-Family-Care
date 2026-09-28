@@ -47,7 +47,8 @@ export default async function PrintCasePage({params,searchParams}:{params:Promis
  const title=scope==='arrangement'?'Arrangement details':scope==='family'?'Family documents':labels[scope];
 
  return <main className={styles.page}>
-  <nav className={styles.controls}><Link href={`/cases/${id}`}>← Back to case</Link><PrintButton/></nav>
+  <nav className={styles.controls}><Link href={`/cases/${id}`}>← Back to case</Link><PrintButton href={`/cases/${id}/print/pdf?scope=${scope}`}/></nav>
+  <p className={styles.printHelp}>Open the downloaded PDF to print it or save a copy.</p>
   <header className={styles.header}><p>Marshall Funeral Home · Case {c.case_number}</p><h1>{title}</h1><h2>{caseName(c)}</h2>{Boolean(c.metadata.next_of_kin_name)&&<p>Next of kin: {String(c.metadata.next_of_kin_name)}</p>}</header>
   {scope==='arrangement'?<>
    <section className={styles.document}><h2>Arrangement conference</h2>{appointments.length?appointments.map(appointment=><p key={appointment.id}><strong>{appointment.title}</strong><br/>{dateLabel(appointment.starts_at)} · {label(appointment.status)}</p>):<p className={styles.empty}>No arrangement appointment saved yet.</p>}</section>

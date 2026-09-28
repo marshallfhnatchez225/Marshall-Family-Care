@@ -1,6 +1,8 @@
 .page{max-width:850px;margin:0 auto;padding:32px 24px 80px;color:#211a1d;background:#fff;font:14px/1.5 Arial,sans-serif}
 .controls{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:32px}
 .controls a{color:#761d38;font-weight:700}
+.controls a:last-child{color:#fff}
+.printHelp{margin:-22px 0 26px;color:#5e5559;font-size:13px}
 .header{border-bottom:2px solid #761d38;padding-bottom:18px;margin-bottom:26px}
 .header p{margin:0 0 6px;color:#5e5559}
 .header h1{font-size:26px;margin:0 0 5px}
@@ -19,7 +21,7 @@
 @media print{
  @page{size:letter;margin:.65in}
  .page{max-width:none;padding:0;margin:0;font-size:11pt;color:#000}
- .controls{display:none}
+ .controls,.printHelp{display:none}
  .header{margin-bottom:20px}
  .document{break-inside:auto;page-break-after:always}
  .document:last-child{page-break-after:auto}
