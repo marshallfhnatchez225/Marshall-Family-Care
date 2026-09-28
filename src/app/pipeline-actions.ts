@@ -45,14 +45,21 @@ export async function pipelineAction(_:ActionState,form:FormData):Promise<Action
    refresh(id);return {message:'Private link created for 7 days. No message has been sent.',link:`${process.env.NEXT_PUBLIC_APP_URL || 'https://marshall-os.vercel.app'}/family/${token}`};
   } else if(op==='send-intake') {
    if(!process.env.SUPABASE_SECRET_KEY&&!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Family portal connection is not configured yet.');
+   const {data:voiceJobs,error:voiceError}=await client.from('voice_deliveries').select('id').eq('case_id',id).neq('status','cancelled').limit(1);check(voiceError);
+   if(voiceJobs?.length)throw new Error('Resolve the existing Google Voice delivery in Settings before preparing another packet.');
    const selected=['embalming','general','obituary','deathCertificate'].filter(section=>form.get(`document.${section}`)==='on');
    if(!selected.length)throw new Error('Choose at least one first-call document.');
    const token=randomBytes(32).toString('base64url');
-   const link=`https://marshall-os.vercel.app/family/${token}`;
-   const {data:job,error:queueError}=await client.rpc('queue_voice_intake',{target_case:id,sections:selected,link_hash:tokenHash(token),portal_url:link});check(queueError);
+   const link=`${process.env.NEXT_PUBLIC_APP_URL || 'https://marshall-os.vercel.app'}/family/${token}`;
+   check((await client.from('portal_links').insert({...base,token_hash:tokenHash(token),expires_at:new Date(Date.now()+7*86400000).toISOString()})).error);
+   check((await client.from('documents').update({status:'requested',updated_at:new Date().toISOString()}).eq('case_id',id).in('metadata->>section',selected)).error);
+   const names:Record<string,string>={embalming:'Permission to Embalm',general:'General Information',obituary:'Obituary',deathCertificate:'Death Certificate Worksheet'};
+   const list=selected.map(section=>`• ${names[section]}`).join('\n');
+   const body=`Marshall Funeral Home: Please complete these secure first-call documents:\n${list}\n\n${link}\n\nThis private link expires in 7 days. Reply here if you need help.`;
+   check((await client.from('communications').insert({...base,direction:'outbound',channel:'internal',subject:'Your Marshall Family Care first-call packet',body,status:'draft',created_by:auth.claims.sub})).error);
+   check((await client.from('cases').update({metadata:{...c.metadata,intake_prepared_at:new Date().toISOString(),intake_documents:selected},updated_at:new Date().toISOString()}).eq('id',id)).error);
    refresh(id);
-   revalidatePath('/settings/voice-bridge');
-   return {message:`Google Voice delivery ${job} is in the queue. Codex will send it through the signed-in browser. The case stays in Intake until the outgoing message is verified.`};
+   return {message:'Packet ready. Send the prepared message through Google Voice, then confirm it was sent. The case stays in Intake until confirmation.',link,voicePhone:String(c.metadata.family_mobile||''),voiceMessage:body};
   } else if(op==='graduate-intake') {
    const {data:voiceJobs,error:voiceError}=await client.from('voice_deliveries').select('id').eq('case_id',id).neq('status','cancelled').limit(1);check(voiceError);
    if(voiceJobs?.length)throw new Error('Use the Google Voice delivery queue to verify or resolve this send.');
