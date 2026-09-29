@@ -35,7 +35,7 @@ export default async function TasksPage() {
     <header className="commandhero"><div><p className="eyebrow">Production queue</p><h1>Tasks</h1><p>Track each family’s orders and design work in one view.</p></div><span className="badge green">{openCount} open</span></header>
     <section className="workflow-card task-matrix-card">
       <h2>Case production work</h2>
-      <p>Tasks run across the top; family names run down the side. Select a status bar to complete or reopen a task.</p>
+      <p>Tasks run across the top; family names run down the side. Click If Done marks a task complete; select Done to reopen it.</p>
       {taskResult.error && <p className="formerror">Unable to load tasks.</p>}
       {caseResult.error && <p className="formerror">Unable to load case names.</p>}
       {!tasks.length && !taskResult.error && <p>No arrangement tasks yet.</p>}
@@ -46,7 +46,7 @@ export default async function TasksPage() {
             const completed = row.caseTasks.filter(task => task.status === 'done').length;
             return <tr key={row.id}>
               <th scope="row" className="task-case-column"><div className="task-case-name">{row.caseRecord ? <Link href={`/cases/${row.id}#arrangement`}>{row.name}</Link> : row.name}</div>{row.caseRecord && <small>{row.caseRecord.case_number}</small>}<progress value={completed} max={row.caseTasks.length} aria-label={`${row.name}: ${completed} of ${row.caseTasks.length} tasks complete`}/><small>{completed} of {row.caseTasks.length} complete</small></th>
-              {taskTitles.map(title => <td key={title}>{row.caseTasks.filter(task => task.title === title).map(task => <ActionForm key={task.id} action={pipelineAction} className={`task-status-form ${task.status === 'done' ? 'is-done' : 'is-open'}`} submit={task.status === 'done' ? '✓ Done' : '○ Open'}><input type="hidden" name="op" value="task-status"/><input type="hidden" name="case_id" value={task.case_id}/><input type="hidden" name="record_id" value={task.id}/><input type="hidden" name="status" value={task.status === 'done' ? 'open' : 'done'}/></ActionForm>)}{!row.caseTasks.some(task => task.title === title) && <span className="task-not-applicable" aria-label="No task">—</span>}</td>)}
+              {taskTitles.map(title => <td key={title}>{row.caseTasks.filter(task => task.title === title).map(task => <ActionForm key={task.id} action={pipelineAction} className={`task-status-form ${task.status === 'done' ? 'is-done' : 'is-open'}`} submit={task.status === 'done' ? '✓ Done' : 'Click If Done'}><input type="hidden" name="op" value="task-status"/><input type="hidden" name="case_id" value={task.case_id}/><input type="hidden" name="record_id" value={task.id}/><input type="hidden" name="status" value={task.status === 'done' ? 'open' : 'done'}/></ActionForm>)}{!row.caseTasks.some(task => task.title === title) && <span className="task-not-applicable" aria-label="No task">—</span>}</td>)}
             </tr>;
           })}</tbody>
         </table>
