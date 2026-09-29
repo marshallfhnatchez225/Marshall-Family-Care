@@ -67,19 +67,46 @@ export async function createStaff(_: ActionState, form: FormData): Promise<Actio
   }
 
   const { data: created, error: createError } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: name } });
-  if (createError || !created.user) return { error: 'The account could not be created. Check whether this email already has an account or the password meets account requirements.' };
+  let authUser = created.user;
+  let linkedExistingSignIn = false;
+  if (createError) {
+    const reason = `${createError.code ?? ''} ${createError.message}`;
+    if (!/already|exists|registered/i.test(reason)) {
+      return { error: /password|weak/i.test(reason) ? 'That password does not meet the sign-in requirements. Choose a stronger password and try again.' : 'The account could not be created. Please try again.' };
+    }
 
-  const userId = created.user.id;
+    // An Auth sign-in may predate Marshall OS and have no staff profile yet.
+    let page = 1;
+    while (!authUser) {
+      const { data: accounts, error: lookupError } = await admin.auth.admin.listUsers({ page, perPage: 100 });
+      if (lookupError) return { error: 'Could not check the existing sign-in. Please try again.' };
+      authUser = accounts.users.find(user => user.email?.toLowerCase() === email) ?? null;
+      if (authUser || !accounts.nextPage) break;
+      page = accounts.nextPage;
+    }
+    if (!authUser) return { error: 'This email already has a sign-in, but its account could not be found. Please contact a Marshall administrator.' };
+    const { data: profile, error: profileError } = await admin.from('users').select('organization_id').eq('id', authUser.id).maybeSingle();
+    if (profileError) return { error: 'Could not check the existing account’s access. Please try again.' };
+    if (profile || (authUser.app_metadata?.organization_id && authUser.app_metadata.organization_id !== orgId)) {
+      return { error: 'This email already belongs to another staff account. Its access was not changed.' };
+    }
+    linkedExistingSignIn = true;
+  }
+  if (!authUser) return { error: 'The account could not be created. Please try again.' };
+
+  const userId = authUser.id;
   const { error: userError } = await admin.from('users').upsert({ id: userId, organization_id: orgId, full_name: name, email, status: 'active' }, { onConflict: 'id' });
   const { error: assignmentError } = userError ? { error: userError } : await admin.from('user_roles').upsert({ organization_id: orgId, user_id: userId, role_id: role.id }, { onConflict: 'user_id,role_id' });
   const { error: metadataError } = userError || assignmentError ? { error: userError || assignmentError } : await admin.auth.admin.updateUserById(userId, {
-    app_metadata: { ...created.user.app_metadata, organization_id: orgId, role: roleKey, role_name: 'Intake & Tasks Staff', allowed_modules: modules },
+    ...(linkedExistingSignIn ? { password, email_confirm: true, user_metadata: { ...authUser.user_metadata, full_name: name } } : {}),
+    app_metadata: { ...authUser.app_metadata, organization_id: orgId, role: roleKey, role_name: 'Intake & Tasks Staff', allowed_modules: modules },
   });
   if (userError || assignmentError || metadataError) {
-    await admin.auth.admin.deleteUser(userId);
-    return { error: 'Access setup failed. The incomplete account was removed; please try again.' };
+    if (linkedExistingSignIn) await admin.from('users').delete().eq('id', userId).eq('organization_id', orgId);
+    else await admin.auth.admin.deleteUser(userId);
+    return { error: 'Access setup failed. Please try again; the incomplete Marshall OS staff profile was removed.' };
   }
 
   revalidatePath('/settings/team');
-  return { message: `Account created for ${email}. The password is set.${phone ? ' Review and send the login link through Google Voice.' : ''}`, ...(phone ? { voicePhone: phone, voiceMessage: `${name.split(' ')[0]}, your Marshall OS staff account is ready. Sign in at https://marshall-os.vercel.app/login using ${email} and the password Jonte gave you.` } : {}) };
+  return { message: `${linkedExistingSignIn ? 'Existing sign-in linked to Marshall OS' : 'Account created'} for ${email}. The password is set.${phone ? ' Review and send the login link through Google Voice.' : ''}`, ...(phone ? { voicePhone: phone, voiceMessage: `${name.split(' ')[0]}, your Marshall OS staff account is ready. Sign in at https://marshall-os.vercel.app/login using ${email} and the password Jonte gave you.` } : {}) };
 }
