@@ -50,17 +50,16 @@ export default async function PrintCasePage({params,searchParams}:{params:Promis
   <nav className={styles.controls}><Link href={`/cases/${id}`}>← Back to case</Link><PrintButton href={`/cases/${id}/print/pdf?scope=${scope}`}/></nav>
   <p className={styles.printHelp}>Open the downloaded PDF to print it or save a copy.</p>
   <header className={styles.header}><p>Marshall Funeral Home · Case {c.case_number}</p><h1>{title}</h1><h2>{caseName(c)}</h2>{Boolean(c.metadata.next_of_kin_name)&&<p>Next of kin: {String(c.metadata.next_of_kin_name)}</p>}</header>
-  {scope==='arrangement'?<>
-   <section className={styles.document}><h2>Arrangement conference</h2>{appointments.length?appointments.map(appointment=><p key={appointment.id}><strong>{appointment.title}</strong><br/>{dateLabel(appointment.starts_at)} · {label(appointment.status)}</p>):<p className={styles.empty}>No arrangement appointment saved yet.</p>}</section>
-   <section className={styles.document}><h2>Arrangement sheet</h2>{arrangementGroups.map(group=>{
+  {scope==='arrangement'?<section className={`${styles.document} ${styles.arrangementDocument}`}>
+   <div className={styles.group}><h3>Arrangement conference</h3>{appointments.length?appointments.map(appointment=><p key={appointment.id}><strong>{appointment.title}</strong><br/>{dateLabel(appointment.starts_at)} · {label(appointment.status)}</p>):<p className={styles.empty}>No arrangement appointment saved yet.</p>}</div>
+   {arrangementGroups.map(group=>{
     const entries=group.fields.map(field=>{
      const [section,key]=field.auto?.split('.')||[];
      const familyValue=docs.find(doc=>doc.metadata.section===section)?.metadata.responses?.[key];
      return [field.label,String(sheet[field.name]??familyValue??'').trim()] as [string,string];
     }).filter(([,value])=>value);
     return <div className={styles.group} key={group.heading}><h3>{group.heading}</h3><Answers entries={entries}/></div>;
-   })}</section>
-  </>:selectedDocs.length?selectedDocs.map(doc=>{
+   })}</section>:selectedDocs.length?selectedDocs.map(doc=>{
    const section=doc.metadata.section as SectionKey;
    if (!isSection(section)) return null;
    const entries=Object.entries(doc.metadata.responses||{}).filter(([key,value])=>Boolean(value)&&!key.toLowerCase().includes('signaturedata')).map(([key,value])=>[answerLabel(section,key),String(value)] as [string,string]);

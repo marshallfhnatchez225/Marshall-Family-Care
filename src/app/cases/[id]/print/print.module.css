@@ -8,13 +8,15 @@
 .header h1{font-size:26px;margin:0 0 5px}
 .header h2{font-size:18px;font-weight:500;margin:0}
 .document{margin:0 0 28px;break-inside:avoid-page}
+.arrangementDocument{columns:2 240px;column-gap:20px}
 .document h2{font-size:19px;margin:0 0 12px}
 .documentHead{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid #c9bec3;margin-bottom:12px}
 .documentHead span{font-size:12px;color:#5e5559;text-transform:capitalize}
-.group{margin:0 0 22px}
+.group{margin:0 0 18px;break-inside:avoid-column}
 .group h3{font-size:15px;margin:0 0 5px;color:#761d38}
 .answers{margin:0}
-.answers div{display:grid;grid-template-columns:38% 1fr;gap:16px;border-bottom:1px solid #e5dfe2;padding:7px 0;break-inside:avoid}
+.answers div{display:block;border-bottom:1px solid #e5dfe2;padding:5px 0;break-inside:avoid}
+.answers dt{font-size:11px;font-weight:700}
 .answers dt{color:#5e5559}
 .answers dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
 .familyDocument .answers{columns:2 240px;column-gap:20px}
@@ -23,14 +25,19 @@
 .familyDocument .answers dd{font-size:13px}
 .empty{color:#726a6e;font-style:italic}
 @media print{
- @page{size:letter;margin:.65in}
- .page{max-width:none;padding:0;margin:0;font-size:11pt;color:#000}
+ @page{size:letter;margin:.4in}
+ .page{max-width:none;padding:0;margin:0;font-size:8pt;line-height:1.2;color:#000}
  .controls,.printHelp{display:none}
- .header{margin-bottom:20px}
- .document{break-inside:auto;page-break-after:always}
+ .header{margin-bottom:12px;padding-bottom:8px}
+ .header h1{font-size:16pt}
+ .header h2{font-size:10pt}
+ .document{break-inside:avoid-page;page-break-after:always}
  .document:last-child{page-break-after:auto}
- .group{break-inside:avoid-page}
+ .arrangementDocument,.familyDocument .answers{columns:2;column-gap:14px}
+ .group{break-inside:avoid-column;margin-bottom:10px}
+ .group h3{font-size:9pt;margin-bottom:3px}
+ .answers div,.familyDocument .answers div{padding:2px 0}
  .answers div{border-color:#ccc}
- .familyDocument .answers dt{font-size:9pt}
- .familyDocument .answers dd{font-size:10pt}
+ .answers dt,.familyDocument .answers dt{font-size:7pt}
+ .answers dd,.familyDocument .answers dd{font-size:8pt}
 }

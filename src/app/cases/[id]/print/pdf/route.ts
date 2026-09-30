@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb, type PDFFont } from 'pdf-lib';
 import { createClient } from '@/lib/supabase/server';
 import { arrangementGroups } from '@/lib/arrangement-fields';
 import { fields, labels, legacyFieldLabels, type SectionKey } from '@/lib/packet-fields';
@@ -7,7 +7,7 @@ import { caseName, dateLabel, label, type CaseRecord, type DocumentRecord, type 
 export const dynamic = 'force-dynamic';
 
 const letter:[number,number]=[612,792];
-const margin=46;
+const margin=32;
 const usableWidth=letter[0]-2*margin;
 const wine=rgb(.46,.11,.22);
 const gray=rgb(.38,.36,.37);
@@ -49,79 +49,77 @@ function fieldLabel(section:SectionKey,key:string) {
   || key.replace(/([a-z])([A-Z])/g,'$1 $2');
 }
 
-async function makePdf(c:CaseRecord,docs:DocumentRecord[],appointments:ServiceRecord[],scope:string) {
+type PrintGroup={heading:string;entries:[string,string][]};
+type PrintRow={kind:'heading'|'field';group:string;title:string;value:string};
+
+export async function makePdf(c:CaseRecord,docs:DocumentRecord[],appointments:ServiceRecord[],scope:string) {
  const pdf=await PDFDocument.create();
  const regular=await pdf.embedFont(StandardFonts.Helvetica);
  const bold=await pdf.embedFont(StandardFonts.HelveticaBold);
- let page:PDFPage;
- let y=0;
- let currentTitle='';
+ const gutter=18;
+ const columnWidth=(usableWidth-gutter)/2;
+ const top=letter[1]-113;
+ const bottom=47;
 
- function beginPage(title:string) {
-  currentTitle=title;
-  page=pdf.addPage(letter);
-  y=letter[1]-margin;
-  page.drawText('MARSHALL FUNERAL HOME',{x:margin,y,size:9,font:bold,color:wine});
-  y-=28;
-  page.drawText(safe(title),{x:margin,y,size:19,font:bold,color:wine});
-  y-=22;
-  page.drawText(safe(`${caseName(c)}  |  Case ${c.case_number}`),{x:margin,y,size:11,font:regular});
-  y-=10;
-  page.drawLine({start:{x:margin,y},end:{x:letter[0]-margin,y},thickness:1,color:wine});
-  y-=27;
- }
+ function drawSheet(title:string,groups:PrintGroup[]) {
+  const page=pdf.addPage(letter);
+  page.drawText('MARSHALL FUNERAL HOME',{x:margin,y:letter[1]-36,size:8.5,font:bold,color:wine});
+  page.drawText(safe(title),{x:margin,y:letter[1]-62,size:17,font:bold,color:wine});
+  page.drawText(safe(`${caseName(c)}  |  Case ${c.case_number}`),{x:margin,y:letter[1]-80,size:9.5,font:regular,color:gray});
+  page.drawLine({start:{x:margin,y:letter[1]-91},end:{x:letter[0]-margin,y:letter[1]-91},thickness:1,color:wine});
 
- function section(title:string) {
-  if(y<95)beginPage(`${currentTitle} (continued)`);
-  page.drawText(safe(title),{x:margin,y,size:12,font:bold,color:wine});
-  y-=19;
- }
-
- function pair(title:string,value:string) {
-  const textLines=linesFor(value||'Not provided',regular,10.5,usableWidth);
-  const height=15+textLines.length*14+10;
-  if(y-height<58)beginPage(`${currentTitle} (continued)`);
-  page.drawText(safe(title),{x:margin,y,size:9,font:bold,color:gray});
-  y-=15;
-  for(const textLine of textLines){page.drawText(textLine,{x:margin,y,size:10.5,font:regular});y-=14;}
-  page.drawLine({start:{x:margin,y:y+4},end:{x:letter[0]-margin,y:y+4},thickness:.5,color:pale});
-  y-=10;
- }
-
- function compactForm(entries:[string,string][]) {
-  const gutter=20;
-  const columnWidth=(usableWidth-gutter)/2;
-  const topY=y;
-  const prepared=entries.map(([title,value])=>{
-   const lines=linesFor(value||'Not provided',regular,9.5,columnWidth);
-   return {title,lines,height:12+lines.length*12+8};
-  });
-  const available=topY-58;
-  const target=Math.min(available,prepared.reduce((sum,item)=>sum+item.height,0)/2);
-  let column=0;
-  let used=0;
-  let position=topY;
-  for(const item of prepared){
-   if(column===0&&used>0&&used+item.height>target){column=1;position=topY;}
-   if(position-item.height<58){
-    if(column===0){column=1;position=topY;}
-    else {beginPage(`${currentTitle} (continued)`);column=0;position=y;}
+  const rows:PrintRow[]=groups.flatMap(group=>group.entries.length?[{kind:'heading' as const,group:group.heading,title:group.heading,value:''},...group.entries.map(([field,value])=>({kind:'field' as const,group:group.heading,title:field,value}))]:[]);
+  if(!rows.length)rows.push({kind:'field',group:'',title:'Saved answers',value:'No answers saved yet.'});
+  let chosen:{size:number;split:number;left:PrintRow[];right:PrintRow[];height:number}|undefined;
+  for(const size of [9,8.5,8,7.5,7,6.5,6,5.5]) {
+   let bestAtSize:typeof chosen;
+   const labelSize=size*.82;
+   const lineHeight=size*1.18;
+   const rowHeight=(row:PrintRow)=>row.kind==='heading'?size*2.2:
+    labelSize+4+linesFor(row.value||'Not provided',regular,size,columnWidth).length*lineHeight+5;
+   const heights=rows.map(rowHeight);
+   const prefix=[0];
+   for(const height of heights)prefix.push(prefix[prefix.length-1]+height);
+   const total=prefix[prefix.length-1];
+   for(let split=1;split<=rows.length;split++){
+    if(rows[split-1]?.kind==='heading')continue;
+    const repeated=split<rows.length&&rows[split]?.kind==='field'&&rows[split-1]?.group===rows[split]?.group?
+     [{kind:'heading' as const,group:rows[split].group,title:rows[split].group,value:''}]:[];
+    const left=rows.slice(0,split);
+    const right=[...repeated,...rows.slice(split)];
+    const height=Math.max(prefix[split],total-prefix[split]+repeated.reduce((sum,row)=>sum+rowHeight(row),0));
+    if(!bestAtSize||height<bestAtSize.height)bestAtSize={size,split,left,right,height};
    }
+   chosen=bestAtSize;
+   if(chosen&&chosen.height<=top-bottom)break;
+  }
+  if(!chosen)throw new Error('Unable to lay out the print form');
+  const {size}=chosen;
+  for(const [column,items] of [chosen.left,chosen.right].entries()){
    const x=margin+column*(columnWidth+gutter);
-   page.drawText(safe(item.title),{x,y:position,size:8,font:bold,color:gray});
-   position-=12;
-   for(const textLine of item.lines){page.drawText(textLine,{x,y:position,size:9.5,font:regular});position-=12;}
-   page.drawLine({start:{x,y:position+3},end:{x:x+columnWidth,y:position+3},thickness:.4,color:pale});
-   position-=8;
-   if(column===0)used+=item.height;
+   let y=top;
+   for(const row of items){
+    if(row.kind==='heading'){
+     page.drawText(safe(row.title),{x,y,size:size*1.04,font:bold,color:wine});
+     y-=size*2.2;
+     continue;
+    }
+    page.drawText(safe(row.title),{x,y,size:size*.82,font:bold,color:gray});
+    y-=size*.82+4;
+    for(const line of linesFor(row.value||'Not provided',regular,size,columnWidth)){
+     page.drawText(line,{x,y,size,font:regular});
+     y-=size*1.18;
+    }
+    page.drawLine({start:{x,y:y+1.5},end:{x:x+columnWidth,y:y+1.5},thickness:.35,color:pale});
+    y-=5;
+   }
   }
  }
 
  if(scope==='arrangement') {
-  beginPage('Arrangement details');
-  section('Arrangement conference');
-  if(appointments.length)for(const appointment of appointments)pair(appointment.title||'Appointment',`${dateLabel(appointment.starts_at)}  |  ${label(appointment.status)}`);
-  else pair('Appointment','No arrangement appointment saved yet.');
+  const groups:PrintGroup[]=[{heading:'Arrangement conference',entries:appointments.length?
+   appointments.map(appointment=>[appointment.title||'Appointment',`${dateLabel(appointment.starts_at)}  |  ${label(appointment.status)}`] as [string,string]):
+   [['Appointment','No arrangement appointment saved yet.'] as [string,string]]}];
   const sheet=(c.metadata.arrangement_sheet||{}) as Record<string,string>;
   const familyAnswers=(source:string|undefined)=>{
    const [sectionName,key]=source?.split('.')||[];
@@ -130,28 +128,34 @@ async function makePdf(c:CaseRecord,docs:DocumentRecord[],appointments:ServiceRe
   for(const group of arrangementGroups){
    const entries=group.fields.map(field=>[field.label,String(sheet[field.name]??familyAnswers(field.auto)??'').trim()] as [string,string]).filter(([,value])=>value);
    if(!entries.length)continue;
-   section(group.heading);
-   for(const [title,value] of entries)pair(title,value);
+   groups.push({heading:group.heading,entries});
   }
+  drawSheet('Arrangement details',groups);
  } else {
   const selected=scope==='family'?docs.filter(doc=>Object.values(doc.metadata.responses||{}).some(Boolean)):docs.filter(doc=>doc.metadata.section===scope);
-  if(!selected.length){beginPage('Family documents');pair('Saved answers','No family answers have been saved yet.');}
+  if(!selected.length)drawSheet('Family documents',[{heading:'Saved answers',entries:[['Status','No family answers have been saved yet.']]}]);
   for(const doc of selected){
    const sectionKey=doc.metadata.section as SectionKey;
    if(!sections.includes(sectionKey))continue;
-   beginPage(labels[sectionKey]);
    const entries=Object.entries(doc.metadata.responses||{}).filter(([key,value])=>Boolean(value)&&!key.toLowerCase().includes('signaturedata'));
-   if(!entries.length){pair('Review status',label(doc.status));pair('Saved answers','No answers saved yet.');continue;}
    const order=fields[sectionKey].flatMap(group=>group.fields).map(field=>field.name);
    entries.sort(([a],[b])=>(order.indexOf(a)<0?Number.MAX_SAFE_INTEGER:order.indexOf(a))-(order.indexOf(b)<0?Number.MAX_SAFE_INTEGER:order.indexOf(b)));
-   compactForm([['Review status',label(doc.status)],...entries.map(([key,value])=>[fieldLabel(sectionKey,key),value] as [string,string])]);
+   const used=new Set<string>();
+   const groups:PrintGroup[]=[{heading:'Review',entries:[['Status',label(doc.status)]]}];
+   for(const group of fields[sectionKey]){
+    const groupEntries=entries.filter(([key])=>group.fields.some(field=>field.name===key));
+    if(groupEntries.length){groups.push({heading:group.title,entries:groupEntries.map(([key,value])=>[fieldLabel(sectionKey,key),value])});groupEntries.forEach(([key])=>used.add(key));}
+   }
+   const remaining=entries.filter(([key])=>!used.has(key));
+   if(remaining.length)groups.push({heading:'Additional information',entries:remaining.map(([key,value])=>[fieldLabel(sectionKey,key),value])});
+   drawSheet(labels[sectionKey],groups);
   }
  }
 
  const pages=pdf.getPages();
  for(let index=0;index<pages.length;index++){
   const footer=`Marshall OS  |  ${index+1} of ${pages.length}`;
-  pages[index].drawText(footer,{x:margin,y:28,size:8,font:regular,color:gray});
+  pages[index].drawText(footer,{x:margin,y:25,size:8,font:regular,color:gray});
  }
  return pdf.save();
 }
