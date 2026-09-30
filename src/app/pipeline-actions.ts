@@ -6,13 +6,14 @@ import { processEmailQueue } from '@/lib/notification-worker';
 import { createClient } from '@/lib/supabase/server';
 import { portalAccess, tokenHash } from '@/lib/portal';
 import { fields, type SectionKey } from '@/lib/packet-fields';
+import { syncNewspaperObituary } from '@/lib/newspaper-obituary';
 import { certificateStates, stages } from '@/lib/pipeline';
 import type { ActionState } from '@/components/action-form';
 
 const text=(f:FormData,k:string,max=2000)=>String(f.get(k)||'').trim().slice(0,max);
 const uuid=(value:string)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 function check(error:{message:string}|null) { if(error) throw new Error(error.message); }
-function refresh(id:string) { for(const p of ['/','/intake','/cases','/family-care','/documents','/tasks','/services','/communications',`/cases/${id}`]) revalidatePath(p); }
+function refresh(id:string) { for(const p of ['/','/intake','/cases','/family-care','/documents','/tasks','/services','/communications','/content',`/cases/${id}`]) revalidatePath(p); }
 
 export async function pipelineAction(_:ActionState,form:FormData):Promise<ActionState> {
  try {
@@ -131,6 +132,7 @@ async function uploadDocument(client:Awaited<ReturnType<typeof createClient>>,ca
 export async function familyAction(_:ActionState,form:FormData):Promise<ActionState> {
  try {
   const token=text(form,'token',100);const {client,link}=await portalAccess(token);const op=text(form,'op');
+  let resultMessage='Saved. Marshall staff can now see your update.';
   if(op==='section') {
    const section=text(form,'section') as SectionKey;if(!Object.hasOwn(fields,section))throw new Error('Invalid section.');
    const {data:d,error:e}=await client.from('documents').select('id,metadata,status').eq('case_id',link.case_id).eq('metadata->>section',section).eq('metadata->>family_visible','true').single();check(e);
@@ -142,6 +144,22 @@ export async function familyAction(_:ActionState,form:FormData):Promise<ActionSt
    const submit=form.get('intent')==='submit';
    if(submit)for(const field of fields[section].flatMap(g=>g.fields).filter(f=>!['signatureIntent','attestation'].includes(f.name)))if(field.required&&!responses[field.name])throw new Error(`Complete ${field.label}.`);
    check((await client.from('documents').update({metadata:{...d.metadata,responses},status:submit?'submitted':'incomplete',approved_by:null,approved_at:null,updated_at:new Date().toISOString()}).eq('id',d.id).eq('case_id',link.case_id).eq('metadata->>family_visible','true').neq('status','approved').select('id').single()).error);
+   if(section==='obituary'&&submit) {
+    try {
+     await syncNewspaperObituary(client,link.organization_id,link.case_id,d.id);
+     resultMessage='Obituary information submitted. Marshall staff can review the newspaper draft.';
+    } catch {
+     console.error('Newspaper obituary draft creation needs staff review.');
+     resultMessage='Obituary information was submitted, but the newspaper draft needs staff attention.';
+    }
+   }
+   if(section==='general') {
+    const {data:obituary}=await client.from('documents').select('id,status').eq('case_id',link.case_id).eq('metadata->>section','obituary').maybeSingle();
+    if(obituary && ['submitted','approved'].includes(obituary.status)) {
+     try { await syncNewspaperObituary(client,link.organization_id,link.case_id,obituary.id); }
+     catch { console.error('Newspaper obituary draft refresh needs staff review.'); }
+    }
+   }
    const {error:trackingError}=await client.rpc('record_portal_activity',{target_link:link.id,activity:submit?'form_submitted':'form_saved',section_name:section,record_id:d.id});
    if(trackingError)console.error('Family form activity tracking needs review.');
   } else if(op==='task') {
@@ -152,6 +170,6 @@ export async function familyAction(_:ActionState,form:FormData):Promise<ActionSt
    const {error:trackingError}=await client.rpc('record_portal_activity',{target_link:link.id,activity:'file_uploaded'});
    if(trackingError)console.error('Family upload activity tracking needs review.');
   } else throw new Error('Unknown action.');
-  refresh(link.case_id); revalidatePath(`/family/${token}`); return {message:'Saved. Marshall staff can now see your update.'};
+  refresh(link.case_id); revalidatePath(`/family/${token}`); return {message:resultMessage};
  }catch(error){return {error:error instanceof Error?error.message:'Unable to save. Please try again.'};}
 }
