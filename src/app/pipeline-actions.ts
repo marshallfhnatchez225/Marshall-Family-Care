@@ -44,6 +44,25 @@ export async function pipelineAction(_:ActionState,form:FormData):Promise<Action
    const token=randomBytes(32).toString('base64url');
    const {error}=await client.from('portal_links').insert({...base,token_hash:tokenHash(token),expires_at:new Date(Date.now()+7*86400000).toISOString()});check(error);
    refresh(id);return {message:'Private link created for 7 days. No message has been sent.',link:`${process.env.NEXT_PUBLIC_APP_URL || 'https://marshall-os.vercel.app'}/family/${token}`};
+  } else if(op==='resend-packet') {
+   if(!process.env.SUPABASE_SECRET_KEY&&!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Family portal connection is not configured yet.');
+   const nextOfKin=text(form,'next_of_kin_name',200);
+   const phone=text(form,'mobile',40).replace(/\D/g,'');
+   if(nextOfKin.length<2) throw new Error('Enter the new next of kin name.');
+   if(!/^[2-9]\d{2}[2-9]\d{6}$/.test(phone)) throw new Error('Enter a valid 10-digit family mobile number.');
+   const {data:pending,error:pendingError}=await client.from('communications').select('id').eq('case_id',id).eq('subject','Resent Marshall Family Care packet').eq('status','draft').limit(1);check(pendingError);
+   if(pending?.length) throw new Error('A replacement packet is already prepared for this case. Verify or resolve it before preparing another.');
+   check((await client.from('cases').update({metadata:{...c.metadata,next_of_kin_name:nextOfKin,family_mobile:phone},updated_at:new Date().toISOString()}).eq('id',id).select('id').single()).error);
+   check((await client.from('portal_links').update({revoked_at:new Date().toISOString()}).eq('case_id',id).is('revoked_at',null)).error);
+   const token=randomBytes(32).toString('base64url');
+   const link=`https://marshall-os.vercel.app/family/${token}`;
+   check((await client.from('portal_links').insert({...base,token_hash:tokenHash(token),expires_at:new Date(Date.now()+7*86400000).toISOString()})).error);
+   const firstName=nextOfKin.split(/\s+/)[0];
+   const decedent=String(c.metadata.decedent_name||'your loved one').trim();
+   const message=`Hi ${firstName}, this is Marshall Funeral Home. Our deepest sympathy for your loss. When you are ready, please complete the private family packet for ${decedent}. It includes Permission to Embalm, General Information, Obituary, and Death Certificate Worksheet. You can save each section as you go, then select “Submit for staff review” when finished. The link expires in 7 days.\n\nIf you need help, feel free to reach out here or call the funeral home, and we will guide you. We will continue to keep you in our prayers.\n\n${link}`;
+   check((await client.from('communications').insert({...base,channel:'sms',direction:'outbound',subject:'Resent Marshall Family Care packet',body:message,status:'draft',created_by:auth.claims.sub})).error);
+   refresh(id);
+   return {message:'Next of kin updated. Earlier family links were revoked. Review this replacement message before sending it in Google Voice.',voicePhone:`+1${phone}`,voiceMessage:message};
   } else if(op==='send-intake') {
    if(!process.env.SUPABASE_SECRET_KEY&&!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Family portal connection is not configured yet.');
    const selected=['embalming','general','obituary','deathCertificate'].filter(section=>form.get(`document.${section}`)==='on');

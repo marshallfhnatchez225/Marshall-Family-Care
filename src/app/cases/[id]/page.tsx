@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { ActionForm } from '@/components/action-form';
+import { GoogleVoiceHandoff } from '@/components/google-voice-handoff';
 import { AppointmentFields } from '@/components/appointment-fields';
 import { createClient } from '@/lib/supabase/server';
 import { pipelineAction } from '@/app/pipeline-actions';
@@ -17,12 +18,13 @@ export default async function CasePage({params}:{params:Promise<{id:string}>}) {
  const {id}=await params;
  if(!/^[0-9a-f-]{36}$/i.test(id))notFound();
  const client=await createClient();
- const [caseResult,docsResult,servicesResult,eventsResult,portalResult]=await Promise.all([
+ const [caseResult,docsResult,servicesResult,eventsResult,portalResult,resendResult]=await Promise.all([
   client.from('cases').select('id,organization_id,family_id,case_number,stage,status,updated_at,metadata').eq('id',id).maybeSingle(),
   client.from('documents').select('id,case_id,title,kind,status,storage_path,metadata,updated_at').eq('case_id',id).order('created_at').limit(100),
   client.from('services').select('id,title,starts_at,status').eq('case_id',id).eq('kind','arrangement'),
   client.from('events').select('id,name,occurred_at,payload').eq('payload->>case_id',id).order('occurred_at',{ascending:false}).limit(20),
   client.from('portal_links').select('id,created_at,expires_at,revoked_at,first_opened_at,last_opened_at,open_count').eq('case_id',id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+  client.from('communications').select('id,body,status,created_at,sent_at').eq('case_id',id).eq('subject','Resent Marshall Family Care packet').order('created_at',{ascending:false}).limit(1).maybeSingle(),
  ]);
  if(caseResult.error)throw new Error('Unable to load this case.');
  if(!caseResult.data)notFound();
@@ -31,7 +33,8 @@ export default async function CasePage({params}:{params:Promise<{id:string}>}) {
  const appointments=(servicesResult.data||[])as ServiceRecord[];
  const events=eventsResult.data||[];
  const portal=portalResult.data;
- const loadErrors=[docsResult,servicesResult,eventsResult,portalResult].filter(result=>result.error);
+ const resend=resendResult.data;
+ const loadErrors=[docsResult,servicesResult,eventsResult,portalResult,resendResult].filter(result=>result.error);
  const sheet=(c.metadata.arrangement_sheet||{})as Record<string,string>;
  const sheetFields=arrangementGroups.flatMap(group=>group.fields);
  const familyForms=docs.filter(document=>document.metadata.section);
@@ -57,6 +60,12 @@ export default async function CasePage({params}:{params:Promise<{id:string}>}) {
   <section className="workflow-card" id="packet">
    <p className="eyebrow">Family documents</p>
    <h2>Forms completed by the family</h2>
+   <details><summary>Update next of kin and resend the family packet</summary>
+    <p>This changes the family mobile number, revokes earlier private links, and prepares a new seven-day link. Review the text before sending it through Google Voice.</p>
+    <ActionForm action={pipelineAction} submit="Prepare replacement packet"><Hidden id={id} op="resend-packet"/><label>Next of kin name<input name="next_of_kin_name" required minLength={2} maxLength={200} defaultValue={String(c.metadata.next_of_kin_name||'')}/></label><label>Family mobile / Google Voice number<input name="mobile" type="tel" required defaultValue={String(c.metadata.family_mobile||'')}/></label></ActionForm>
+   </details>
+   {resend?.status==='draft'&&<div className="workflow-card"><p><strong>Replacement packet ready · not yet recorded as sent</strong></p><GoogleVoiceHandoff phone={`+1${String(c.metadata.family_mobile||'').replace(/\D/g,'')}`} message={resend.body}/><ActionForm action={pipelineAction} submit="Verified sent in Google Voice"><Hidden id={id} op="sent" record={resend.id}/><input type="hidden" name="channel" value="sms"/><p>Use this after the exact message is visible in the correct Google Voice conversation.</p></ActionForm></div>}
+   {resend?.status==='sent'&&<p>Replacement packet sent {resend.sent_at?dateLabel(resend.sent_at):''}.</p>}
    <p><Link className="secondary" href={`/cases/${id}/print?scope=family`} target="_blank">Print saved family forms</Link></p>
    <p>Open a form to view the information the family provided.</p>
    <div className="packet-tracking" aria-label="Family packet tracking"><div><small>Packet sent</small><strong>{c.metadata.intake_sent_at?dateLabel(String(c.metadata.intake_sent_at)):'Not sent'}</strong></div><div><small>First opened</small><strong>{portal?.first_opened_at?dateLabel(portal.first_opened_at):'Not opened yet'}</strong></div><div><small>Last opened</small><strong>{portal?.last_opened_at?dateLabel(portal.last_opened_at):'Not opened yet'}</strong></div><div><small>Portal visits</small><strong>{portal?.open_count||0}</strong></div></div>
